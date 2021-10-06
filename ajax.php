@@ -42,7 +42,7 @@ if (empty($action))
 global $APPLICATION;
 
 $APPLICATION->IncludeComponent(
-	'bitrix:sale.order.ajax',
+	'kit:sale.order.ajax',
 	'.default',
 	$params
 );

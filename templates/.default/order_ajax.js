@@ -138,6 +138,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			this.options.pickUpMap = parameters.pickUpMap;
 			this.options.propertyMap = parameters.propertyMap;
 
+			this.gurumap = parameters.gurumap;
+
 			this.options.totalPriceChanged = false;
 
 			if (!this.result.IS_AUTHORIZED || typeof this.result.LAST_ORDER_DATA.FAIL !== 'undefined')
@@ -261,6 +263,100 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 								break;
 						}
 						BX.cleanNode(this.savedFilesBlockNode);
+
+//guru start
+						var checked_delivery_items = $('.bx-soa-pp-company.bx-selected');
+						for(var i = 0; i < checked_delivery_items.length; i++){
+							var delid = checked_delivery_items[i].childNodes[0].childNodes[0];
+							if(delid) {
+								var delid_code = dl[delid.id];
+
+								if(delid_code)
+								{
+									if( (delid_code != 'Guru_pvz') && (delid_code != 'Guru_Courier') && (delid_code != 'Guru_Post') ) {
+										$( "#datepicker" ).datepicker( "destroy" );
+										for(var j = 0; j < dl_addr.length; j++){
+											if($('div[data-property-id-row="' + dl_addr[j] + '"]')) $('div[data-property-id-row="' + dl_addr[j] + '"]').show();
+											if($('#address2').val() && $('div[data-property-id-row="' + dl_addr[j] + '"]')) $('div[data-property-id-row="' + dl_addr[j] + '"]').val($('#address2').val());
+											else if(document.getElementById('soa-property-'+ dl_addr[j])) $('div[data-property-id-row="' + dl_addr[j] + '"]').val('');
+										}
+									}
+							
+									if(delid_code == 'Guru_pvz'){
+										$( "#datepicker" ).datepicker( "destroy" );
+										$('#guru_map').removeClass('guru_map_hidden');
+										document.getElementById('guru_pvz_data').style.display = 'block';
+										for(var j = 0; j < dl_addr.length; j++){
+											if($('div[data-property-id-row="' + dl_addr[j] + '"]')) $('div[data-property-id-row="' + dl_addr[j] + '"]').hide();
+								            			if(document.getElementById('soa-property-'+ dl_addr[j]) && document.getElementById('guru_pvz_chosen_address').value) document.getElementById('soa-property-'+ dl_addr[j]).value = document.getElementById('guru_pvz_chosen_address').value;
+											else if(document.getElementById('soa-property-'+ dl_addr[j])) $('div[data-property-id-row="' + dl_addr[j] + '"]').val('');
+										}
+										if(document.getElementById('guru_pvz_chosen_address').value) document.getElementById('go_next').value = 'Y';
+										else document.getElementById('go_next').value = 'N';
+							        		}else{
+										$('#guru_map').addClass('guru_map_hidden');
+										document.getElementById('guru_pvz_data').style.display = 'none';
+									}
+									if(delid_code == 'Guru_Courier'){
+										$( "#datepicker" ).datepicker( "destroy" );
+										document.getElementById('guru_courier_params').style.display = 'block';
+										
+										$( "#datepicker" ).datepicker({
+											timepicker : false,
+											dateFormat : 'dd.mm.yy',
+											minDate : "+"+deldays
+										});
+										$("#datepicker").datepicker({
+											inline: true,
+											changeYear: true,
+											changeMonth: true
+										});
+							   
+										jQuery(function ($) {
+										        $.datepicker.regional['ru'] = this.gurumap;
+										        $.datepicker.setDefaults($.datepicker.regional['ru']);
+										});
+							
+										for(var j = 0; j < dl_addr.length; j++){
+											if($('div[data-property-id-row="' + dl_addr[j] + '"]')) $('div[data-property-id-row="' + dl_addr[j] + '"]').hide();
+								            			if(document.getElementById('soa-property-'+ dl_addr[j]) && document.getElementById('guru_courier_address').value) document.getElementById('soa-property-'+ dl_addr[j]).value = document.getElementById('guru_courier_address').value;
+											else if(document.getElementById('soa-property-'+ dl_addr[j])) $('div[data-property-id-row="' + dl_addr[j] + '"]').val('');
+										}
+							
+										if(document.getElementById('guru_courier_address').value) document.getElementById('go_next').value = 'Y';
+										else document.getElementById('go_next').value = 'N';
+									}else{
+										document.getElementById('guru_courier_params').style.display = 'none';
+									}
+									if(delid_code == 'Guru_Post'){
+										$( "#datepicker" ).datepicker( "destroy" );
+										document.getElementById('guru_post_params').style.display = 'block';
+							
+										for(var j = 0; j < dl_fio.length; j++){
+								            			if(document.getElementById('soa-property-'+ dl_fio[j])) $('label[for="soa-property-'+ dl_fio[j] + '"]').html($('label[for="soa-property-'+ dl_fio[j] + '"]').html().replace('<p>' + BX.message("GURU_POST_WARNING") + '</p>', ''));
+										}
+							
+										for(var j = 0; j < dl_addr.length; j++){
+											if($('div[data-property-id-row="' + dl_addr[j] + '"]')) $('div[data-property-id-row="' + dl_addr[j] + '"]').hide();
+								            			if(document.getElementById('soa-property-'+ dl_addr[j]) && document.getElementById('guru_post_address').value) document.getElementById('soa-property-'+ dl_addr[j]).value = document.getElementById('guru_post_address').value;
+											else if(document.getElementById('soa-property-'+ dl_addr[j])) $('div[data-property-id-row="' + dl_addr[j] + '"]').val('');
+										}
+							
+										if(document.getElementById('guru_post_address').value) document.getElementById('go_next').value = 'Y';
+										else document.getElementById('go_next').value = 'N';
+										if($('#guru_address_button_id').attr('room')) document.getElementById('guru_post_button_id').click();
+									}else{
+							
+										for(var j = 0; j < dl_fio.length; j++){
+								            			if(document.getElementById('soa-property-'+ dl_fio[j])) $('label[for="soa-property-'+ dl_fio[j]+'"]').html($('label[for="soa-property-'+ dl_fio[j] + '"]').html().replace('<p>' + BX.message("GURU_POST_WARNING") + '</p>', ''));
+										}
+							
+										document.getElementById('guru_post_params').style.display = 'none';
+									}
+								}
+							}
+						}
+//guru end
 						this.endLoader();
 					}, this),
 					onfailure: BX.delegate(function(){
@@ -2025,6 +2121,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					break;
 				case this.regionBlockNode.id:
 					this.editFadeRegionBlock();
+					document.getElementById('guru_address').style.display = 'none';
 					break;
 				case this.paySystemBlockNode.id:
 					BX.remove(this.paySystemBlockNode.querySelector('.alert.alert-warning.alert-hide'));
@@ -2033,6 +2130,12 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				case this.deliveryBlockNode.id:
 					BX.remove(this.deliveryBlockNode.querySelector('.alert.alert-warning.alert-hide'));
 					this.editFadeDeliveryBlock();
+//guru start
+					$('#guru_map').addClass('guru_map_hidden');
+					document.getElementById('guru_pvz_data').style.display = 'none';
+					document.getElementById('guru_courier_params').style.display = 'none';
+					document.getElementById('guru_post_params').style.display = 'none';
+//guru end
 					break;
 				case this.pickUpBlockNode.id:
 					this.editFadePickUpBlock();
@@ -2125,9 +2228,39 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					break;
 				case this.regionBlockNode.id:
 					this.editActiveRegionBlock(true);
+					document.getElementById('guru_address').style.display = 'block';
 					break;
 				case this.deliveryBlockNode.id:
 					this.editActiveDeliveryBlock(true);
+//guru start
+					var checked_delivery_items = $('.bx-soa-pp-company.bx-selected');
+					for(var i = 0; i < checked_delivery_items.length; i++){
+						var delid = checked_delivery_items[i].childNodes[0].childNodes[0];
+						if(delid) {
+							var delid_code = dl[delid.id];
+							if(delid_code)
+							{
+								if(delid_code == 'Guru_pvz'){
+									$('#guru_map').removeClass('guru_map_hidden');
+									document.getElementById('guru_pvz_data').style.display = 'block';
+						        		}else{
+									$('#guru_map').addClass('guru_map_hidden');
+									document.getElementById('guru_pvz_data').style.display = 'none';
+								}
+								if(delid_code == 'Guru_Courier'){
+									document.getElementById('guru_courier_params').style.display = 'block';
+								}else{
+									document.getElementById('guru_courier_params').style.display = 'none';
+								}
+								if(delid_code == 'Guru_Post'){
+									document.getElementById('guru_post_params').style.display = 'block';
+								}else{
+									document.getElementById('guru_post_params').style.display = 'none';
+								}
+							}
+						}
+					}
+//guru end
 					break;
 				case this.paySystemBlockNode.id:
 					this.editActivePaySystemBlock(true);

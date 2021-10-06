@@ -3,6 +3,8 @@
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
+CModule::IncludeModule("kitgr.gurudelivery");
+
 /**
  * @var array $arParams
  * @var array $arResult
@@ -332,6 +334,32 @@ else
 		{
 			echo $arResult['PREPAY_ADIT_FIELDS'];
 		}
+
+ /*
+       unset($_SESSION['guru_user_delivery_address']);
+        unset($_SESSION['guru_delivery_address']);
+        unset($_SESSION['guru_delivery_city']);
+
+        unset($_SESSION['guru_delivery_index']);
+
+        unset($_SESSION['guru_check_delivery_address']);
+        unset($_SESSION['guru_delivery_location']);
+        unset($_SESSION['guru_delivery_zip']);
+        unset($_SESSION['guru_delivery_room']);
+
+        unset($_SESSION['guru_delivery_pvz']);
+*/
+
+        $guru_props = array();
+        $not_guru_props = array();
+
+        $dbProps = CSaleOrderProps::GetList(array("ID" => "ASC"), array(), false, false, array("ID", "CODE","PERSON_TYPE_ID"));
+        while($check_prop = $dbProps->fetch())
+        {
+                if( (strpos($check_prop["CODE"], "GURU_") !== False) && (strpos($check_prop["CODE"], "GURU_") == 0) ) $guru_props[$check_prop["CODE"]][$check_prop["PERSON_TYPE_ID"]] = $check_prop["ID"];
+                else $not_guru_props[$check_prop["CODE"]][$check_prop["PERSON_TYPE_ID"]] = $check_prop["ID"];
+        }
+
 		?>
 		<input type="hidden" name="<?=$arParams['ACTION_VARIABLE']?>" value="saveOrderAjax">
 		<input type="hidden" name="location_type" value="code">
@@ -369,6 +397,100 @@ else
 					</div>
 				<? endif ?>
 
+                <style>
+<?
+                foreach($guru_props as $guru_prop)
+                {
+		foreach($guru_prop as $guru_subprop)
+		{
+?>
+                    DIV[data-property-id-row="<?=$guru_subprop?>"] {
+                        display: none;
+                    }
+<?
+		}
+                }
+?>
+
+                    .guru_map_hidden{
+                        position: absolute;
+                        visibility: hidden;
+                        width: 100%
+                    }
+
+                    #post_thanks {
+                        display: none;
+                        color: red;
+                    }
+
+                    #courier_thanks {
+                        display: none;
+                        color: red;
+                    }
+
+                    .GuruChDeliveryButtonContainer {
+                        width: 100%;
+                        text-align: center;
+                    }
+
+                    .GuruChDeliveryButton {
+                        border: 2px solid rgb(135, 199, 61);
+                        width: 30%;
+                        background-color: rgb(165, 231, 81);
+                    }
+
+	<?foreach($not_guru_props['LOCATION'] as $location){?>
+	DIV[data-property-id-row="<?=$location?>"] {
+                        display: none
+                    }
+	<?}?>
+
+                    .col-sm-9 .bx-soa-pp-company-selected {
+                        display: none
+                    }
+
+                    .bx-soa-pp-price {
+                        display: none;
+                    }
+
+                    #guru_courier_params {
+                        display: none;
+                        padding: 8px 13px 7px;
+                    }
+
+                    .delivery-add-params {
+                        padding: 8px 13px 7px;
+                    }
+
+                    #no-house-warning {
+                        display: none;
+                    }
+
+                    #guru_post_params {
+                        display: none;
+                    }
+
+                    .pre-input {
+                        width: 250px;
+                        height: 30px;
+                        display: inline-block;
+                    }
+
+                    #night-courier {
+                        display: none;
+                    }
+
+                    #no-room-warning-courier {
+                        display: none;
+                        color: red;
+                    }
+
+                    #no-room-warning-post {
+                        display: none;
+                        color: red;
+                    }
+                </style>
+
 				<!--	REGION BLOCK	-->
 				<div id="bx-soa-region" data-visited="false" class="bx-soa-section bx-active">
 					<div class="bx-soa-section-title-container">
@@ -377,6 +499,19 @@ else
 						</h2>
 						<div class="col-xs-12 col-sm-3 text-right"><a href="" class="bx-soa-editstep"><?=$arParams['MESS_EDIT']?></a></div>
 					</div>
+                        <div id="guru_address" class="guru_delivery_data">
+                            <div style="padding: 8px 13px 7px;"><?=Loc::getMessage('SHOW_YOUR_PLACE')?></div>
+                            <?
+                            $APPLICATION->IncludeComponent(
+                                "kit:dostavka.guru.address",
+                                ".default",
+                                Array(
+                                ),
+                                false
+                            );
+                            ?>
+                        </div>
+                        <span id="no-house-warning"><? echo Loc::getMessage('ENTER_ADDRESS'); ?></span>
 					<div class="bx-soa-section-content container-fluid"></div>
 				</div>
 
@@ -418,9 +553,385 @@ else
 							<h2 class="bx-soa-section-title col-sm-9">
 								<span class="bx-soa-section-title-count"></span><?=$arParams['MESS_DELIVERY_BLOCK_NAME']?>
 							</h2>
-							<div class="col-xs-12 col-sm-3 text-right"><a href="" class="bx-soa-editstep"><?=$arParams['MESS_EDIT']?></a></div>
+							<div class="col-xs-12 col-sm-3 text-right"><a href="" class="bx-soa-editstep" id='guru-delivery-edit'><?=$arParams['MESS_EDIT']?></a></div>
 						</div>
 						<div class="bx-soa-section-content container-fluid"></div>
+                        <?
+                        $delivery_pvz_id = 0;
+
+                        for ($i = 0; $i < count($arResult['JS_DATA']['ORDER_PROP']['properties']); $i++) {
+                            if ($arResult['JS_DATA']['ORDER_PROP']['properties'][$i]["CODE"] == "GURU_FIO")
+                                $arResult['JS_DATA']['ORDER_PROP']['properties'][$i]['VALUE'][0] = $arResult['JS_DATA']['ORDER_PROP']['properties'][0]['VALUE'][0];
+                            if ($arResult['JS_DATA']['ORDER_PROP']['properties'][$i]["CODE"] == "GURU_PHONE")
+                                $arResult['JS_DATA']['ORDER_PROP']['properties'][$i]['VALUE'][0] = $arResult['JS_DATA']['ORDER_PROP']['properties'][2]['VALUE'][0];
+
+                        }
+
+                        $arParams['USER_CONSENT_IS_CHECKED'] = 'N';
+                        ?>
+
+                        <div id="guru_map" class="guru_delivery_data guru_map_hidden">
+                            <?
+                            echo Loc::getMessage('SELECT_PVZ');
+                            $APPLICATION->IncludeComponent(
+                                "kit:dostavka.guru.map",
+                                ".default",
+                                Array(
+                                ),
+                                false
+                            );
+                            ?>
+                            <!--<iframe src="/bitrix/components/bitrix/sale.o666rder.ajax/templates/.default/map_frame.php" id="mapframeid" width="100%">\CA\E0\F0\F2\E0</iframe>-->
+                        </div>
+                        <div id="guru_pvz_data"></div>
+                        <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+                        <script>
+                            $(document).ready(function () {
+		<?foreach($guru_props['GURU_FIO'] as $fio) {?>
+                                    if($("[data-property-id-row=<?=$fio?>]")) $("[data-property-id-row=<?=$fio?>]").before('<input type="checkbox" id="show_recipient" name="show_recipient_name" value="Y"><span style="padding: 0px 4px;"><?=Loc::getMessage('FILL_RECEIVER')?></span>');
+		<?}?>
+                            });
+                            $(document).on('click', '#show_recipient', function () {
+                                if ($("#show_recipient").prop('checked')) {
+		<?foreach($guru_props['GURU_FIO'] as $fio) {?>
+                                    if($("[data-property-id-row=<?=$fio?>]")) $("[data-property-id-row=<?=$fio?>]").show();
+		<?}?>
+		<?foreach($guru_props['GURU_PHONE'] as $phone) {?>
+                                    if($("[data-property-id-row=<?=$phone?>]")) $("[data-property-id-row=<?=$phone?>]").show();
+		<?}?>
+		<?foreach($guru_props['GURU_FIO'] as $fio) {?>
+			if($("#soa-property-<?=$fio?>")) $("#soa-property-<?=$fio?>").attr("placeholder", "");
+		<?}?>
+		<?foreach($guru_props['GURU_PHONE'] as $phone) {?>
+			if($("#soa-property-<?=$phone?>")) $("#soa-property-<?=$phone?>").attr("placeholder", "");
+		<?}?>
+                                } else {
+		<?foreach($guru_props['GURU_FIO'] as $fio) {?>
+                                    if($("[data-property-id-row=<?=$fio?>]")) $("[data-property-id-row=<?=$fio?>]").hide();
+		<?}?>
+		<?foreach($guru_props['GURU_PHONE'] as $phone) {?>
+                                    if($("[data-property-id-row=<?=$phone?>]")) $("[data-property-id-row=<?=$phone?>]").hide();
+		<?}?>
+                                }
+                            });
+
+                            $(function () {
+                                $("#datepicker").datepicker({
+                                    timepicker: false,
+                                    dateFormat: 'dd.mm.yy',
+                                    minDate : "+1"
+                                });
+                            });
+
+
+                            function setPeriods() {
+
+                                var city = $('#guru_address_button_id').attr('courier_city');
+
+                                if (city != '<?=MOSCOW?>') {
+                                    $('#guru_courier_type option[value="<?=Loc::getMessage('NIGHT_DELIVERY')?>"]').prop("disabled", true);
+                                }
+                                else {
+                                    $('#guru_courier_type option[value="<?=Loc::getMessage('NIGHT_DELIVERY')?>"]').prop("disabled", false);
+                                }
+
+                                if ((city != '<?=MOSCOW?>') && (city != '<?=SAINT_PETERSBURG?>')) {
+
+                                    $('#guru_period_start option[value=10]').prop('selected', true);
+                                    $('#guru_period_finish option[value=14]').prop('selected', true);
+                                    $('#guru_period_start').prop('disabled', true);
+                                    $('#guru_period_finish').prop('disabled', true);
+
+                                } else {
+
+                                    $('#guru_period_start').prop('disabled', false);
+                                    $('#guru_period_finish').prop('disabled', false);
+                                    var deldate = $('#datepicker').val();
+                                    var dy, dm, dd;
+                                    dd = deldate.substring(0, 2);
+                                    dm = deldate.substring(3, 5);
+                                    dy = deldate.substring(6);
+                                    var normalizedDate = new Date(dy, dm, dd);
+                                    var dayNum = normalizedDate.getDay();
+
+
+                                    if (dayNum == 2) {
+                                        var guru_period_start = '<option value="10" selected>10.00</option><option value="14">14.00</option>';
+                                        var guru_period_finish = '<option value="14" selected>14.00</option><option value="18">18.00</option>';
+                                        document.getElementById('guru_period_start').innerHTML = guru_period_start;
+                                        document.getElementById('guru_period_finish').innerHTML = guru_period_finish;
+                                    } else {
+                                        if (dayNum == 3) {
+                                            $('#guru_period_start option[value=10]').prop('selected', true);
+                                            $('#guru_period_finish option[value=14]').prop('selected', true);
+                                            $('#guru_period_start').prop('disabled', true);
+                                            $('#guru_period_finish').prop('disabled', true);
+                                        } else {
+                                            document.getElementById('guru_period_start').innerHTML = delfromcontent;
+                                            document.getElementById('guru_period_finish').innerHTML = deltocontent;
+                                        }
+                                    }
+
+
+                                }
+
+                            }
+                        </script>
+                        <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+                        <style>
+                            .ui-datepicker {
+                                z-index: 100 !important;
+                            }
+                        </style>
+                        <input type="hidden" id="guru_courier_address" value="">
+                        <input type="hidden" id="guru_post_address" value="">
+                        <input type="hidden" id="guru_pvz_chosen_address" value="">
+                        <input type="hidden" id="go_next" value="N">
+                        <div id="guru_courier_params">
+                            <p id="no-room-warning-courier"><? echo Loc::getMessage('FILL_REQ'); ?></p>
+                            <span class="pre-input"><? echo Loc::getMessage('SELECT_TYPE'); ?></span>
+                            <select id="guru_courier_type" onchange="changeType();">
+                                <option value='<? echo Loc::getMessage('KDELIVERY'); ?>'
+                                        selected><? echo Loc::getMessage('KDELIVERY'); ?></option>
+                                <option value='<? echo Loc::getMessage('EXDELIVERY'); ?>'><? echo Loc::getMessage('EXDELIVERY'); ?></option>
+                                <option value='<? echo Loc::getMessage('NIGHT_DELIVERY'); ?>'><? echo Loc::getMessage('NIGHT_DELIVERY'); ?></option>
+                            </select>
+                            </br>
+                            <div id="room-input-courier"><span
+                                        class="pre-input"><? echo Loc::getMessage('APNUM'); ?>:<span
+                                            style="color:red">*</span> </span><input type="text"
+                                                                                     class="delivery-add-params"
+                                                                                     id="courier-room"></br></br></div>
+                            <span class="pre-input"><? echo Loc::getMessage('ENTRANCE'); ?>: </span><input type="text"
+                                                                                                           class="delivery-add-params"
+                                                                                                           id="courier-entrance"></br></br>
+                            <span class="pre-input"><? echo Loc::getMessage('HOME_PHONE'); ?>:</span><input type="text"
+                                                                                                            class="delivery-add-params"
+                                                                                                            id="courier-intercom"></br></br>
+                            <span class="pre-input"><? echo Loc::getMessage('STAGE'); ?>: </span><input type="text"
+                                                                                                        class="delivery-add-params"
+                                                                                                        id="courier-level"></br></br>
+							<span class="pre-input"><? echo Loc::getMessage('RECEIVER'); ?>: </span><input type="text"
+                                                                                                        class="delivery-add-params"
+                                                                                                        id="courier-reciever"></br></br>
+                            <span class="pre-input"><? echo Loc::getMessage('SELECT_DELIVERY_DATE'); ?>:<span
+                                        style="color:red">*</span> </span><input type="text" id="datepicker" autocomplete="off" onChange="setPeriods();">
+                            <br>
+                            <div id="day-courier">
+                                <? echo Loc::getMessage('DELFROM'); ?>&nbsp;<select name="start" id="guru_period_start"
+                                                                                    onchange="changeStart();">
+                                    <?
+                                    for ($i = 10; $i <= 18; $i++) {
+                                        $selected = "";
+                                        if ($i == 10)
+                                            $selected = "selected";
+                                        ?>
+                                        <option value="<?= $i ?>" <?= $selected ?>><?= $i ?>.00</option>
+                                        <?
+                                    }
+                                    ?>
+                                </select>
+                                <script>
+                                    var delfromcontent =  document.getElementById('guru_period_start').innerHTML;
+
+
+                                </script>
+                                <? echo Loc::getMessage('DELTO'); ?>&nbsp;<select name="finish" id="guru_period_finish"
+                                                                                  onchange="changeFinish();">
+                                    <?
+                                    for ($i = 13; $i <= 21; $i++) {
+                                        $selected = "";
+                                        if ($i == 18)
+                                            $selected = "selected";
+                                        ?>
+                                        <option value="<?= $i ?>" <?= $selected ?>><?= $i ?>.00</option>
+                                        <?
+                                    }
+                                    ?>
+                                </select>
+                                <script>
+                                    var deltocontent =  document.getElementById('guru_period_finish').innerHTML;
+
+
+                                </script>
+                            </div>
+                            <div id="night-courier">
+                                <p style="color: red;"><? echo Loc::getMessage('EVENING_DELIVERY'); ?></p>
+                                <? echo Loc::getMessage('DELFROM'); ?>&nbsp;<select name="start"
+                                                                                    id="guru_night_period_start"
+                                                                                    onchange="changeStartNight();">
+                                        <option value="22" selected>22.00</option>
+                                        <option value="2">2.00</option>
+                                </select>
+                                <? echo Loc::getMessage('DELTO'); ?>&nbsp;<select name="finish"
+                                                                                  id="guru_night_period_finish"
+                                                                                  onchange="changeFinishNight();">
+                                        <option value="2" selected>2.00</option>
+                                        <option value="6">6.00</option>
+                                </select>
+                            </div>
+                            <input class="guru_address_button" id="guru_courier_button_id" type="button"
+                                   value="<? echo Loc::getMessage('BUTTON_SAVE'); ?>"></input></br>
+                            <p id="courier_thanks"><? echo Loc::getMessage('ADDRESS_SAVED'); ?></p>
+                        </div>
+                        <script>
+
+                            function changeStart() {
+                                var deldate = $('#datepicker').val();
+                                var dy, dm, dd;
+                                dd = deldate.substring(0, 2);
+                                dm = deldate.substring(3, 5);
+                                dy = deldate.substring(6);
+                                var normalizedDate = new Date(dy, dm, dd);
+                                var dayNum = normalizedDate.getDay();
+                                if (dayNum != 2) {
+                                    var selected = parseInt($("#guru_period_start").val());
+                                    var selected2 = parseInt($("#guru_period_finish").val());
+                                    if (selected2 - selected < 3) {
+                                        var result = selected + 3;
+                                        $("#guru_period_finish").val(result);
+                                    }
+                                } else {
+                                    if ($("#guru_period_start").val() == 10) $("#guru_period_finish").val(14);
+                                    else $("#guru_period_finish").val(18);
+                                }
+                            }
+
+                            function changeFinish() {
+                                var deldate = $('#datepicker').val();
+                                var dy, dm, dd;
+                                dd = deldate.substring(0, 2);
+                                dm = deldate.substring(3, 5);
+                                dy = deldate.substring(6);
+                                var normalizedDate = new Date(dy, dm, dd);
+                                var dayNum = normalizedDate.getDay();
+                                if (dayNum != 2) {
+                                    var selected = parseInt($("#guru_period_start").val());
+                                    var selected2 = parseInt($("#guru_period_finish").val());
+                                    if (selected2 - selected < 3) {
+                                        var result = selected2 - 3;
+                                        $("#guru_period_start").val(result);
+                                    }
+                                } else {
+                                    if ($("#guru_period_finish").val() == 14) $("#guru_period_start").val(10);
+                                    else $("#guru_period_start").val(14);
+                                }
+                            }
+
+                            function changeStartNight() {
+                                var selected = parseInt($("#guru_night_period_start").val());
+                                var selected2 = parseInt($("#guru_night_period_finish").val());
+                                if (selected2 - selected < 3) {
+                                    var result = selected + 3;
+                                    $("#guru_night_period_finish").val(result);
+                                }
+                            }
+
+                            function changeFinishNight() {
+                                var selected = parseInt($("#guru_night_period_start").val());
+                                var selected2 = parseInt($("#guru_night_period_finish").val());
+                                if (selected2 - selected < 3) {
+                                    var result = selected2 - 3;
+                                    $("#guru_night_period_start").val(result);
+                                }
+                            }
+
+                            function changeType() {
+                                var selected = $("#guru_courier_type").val();
+                                if (selected == '<?=Loc::getMessage('NIGHT_DELIVERY')?>') {
+                                    document.getElementById('night-courier').style.display = 'block';
+                                    document.getElementById('day-courier').style.display = 'none';
+                                } else {
+                                    document.getElementById('night-courier').style.display = 'none';
+                                    document.getElementById('day-courier').style.display = 'block';
+                                }
+                            }
+
+                            $(document).on('click', '#guru_courier_button_id', function () {
+                                if (!$('#datepicker').val() || !$("#courier-room").val()) {
+                                    document.getElementById('no-room-warning-courier').style.display = 'block';
+		<?foreach($not_guru_props['ADDRESS'] as $address){?>
+                                    if(document.getElementById('soa-property-<?=$address?>')) document.getElementById('soa-property-<?=$address?>').value = '';
+		<?}?>
+                                    document.getElementById('guru_pvz_chosen_address').value = '';
+                                    document.getElementById('guru_courier_address').value = '';
+                                    document.getElementById('guru_post_address').value = '';
+                                    document.getElementById('go_next').value = 'N';
+                                    document.getElementById('courier_thanks').style.display = 'none';
+                                    return false;
+                                }
+                                document.getElementById('no-room-warning-courier').style.display = 'none';
+                                var address_array = $('#guru_address_button_id').attr('courier_address').split(':');
+                                address_array[3] = $("#guru_courier_type").val();
+                                address_array[4] = $('#datepicker').val();
+                                if (address_array[3] == '<?=Loc::getMessage('NIGHT_DELIVERY')?>') {
+                                    address_array[5] = $("#guru_night_period_start").val() + '_' + $("#guru_night_period_finish").val();
+                                } else {
+                                    address_array[5] = $("#guru_period_start").val() + '_' + $("#guru_period_finish").val();
+                                }
+                                address_array[6] = $("#courier-room").val();
+                                address_array[7] = $("#courier-entrance").val();
+                                address_array[8] = $("#courier-intercom").val();
+                                address_array[9] = $("#courier-level").val();
+                                address_array[10] = $('#guru_address_button_id').attr('location');
+                                address_array[11] = $('#guru_address_button_id').attr('courier_city');
+
+                                $.ajax({
+                                	url: '/local/php_interface/include/save_fio.php',
+                                	type: "POST",
+                                	data: {fio: $("#courier-reciever").val()},
+                                	success: function (result) {
+                                	}
+                                });
+		<?foreach($not_guru_props['ADDRESS'] as $address){?>
+                                if(document.getElementById('soa-property-<?=$address?>')) document.getElementById('soa-property-<?=$address?>').value = address_array.join(':');
+		<?}?>
+                                document.getElementById('guru_courier_address').value = address_array.join(':');
+                                document.getElementById('go_next').value = 'Y';
+                                if (!document.getElementById('post-room').value) document.getElementById('post-room').value = $("#courier-room").val();
+                                document.getElementById('courier_thanks').style.display = 'block';
+                            });
+                            $(document).on('click', '#guru_post_button_id', function () {
+                                if (!$("#post-room").val()) {
+                                    document.getElementById('no-room-warning-post').style.display = 'block';
+		<?foreach($not_guru_props['ADDRESS'] as $address){?>
+                                    if(document.getElementById('soa-property-<?=$address?>')) document.getElementById('soa-property-<?=$address?>').value = '';
+		<?}?>
+                                    document.getElementById('guru_pvz_chosen_address').value = '';
+                                    document.getElementById('guru_courier_address').value = '';
+                                    document.getElementById('guru_post_address').value = '';
+                                    document.getElementById('go_next').value = 'N';
+                                    document.getElementById('post_thanks').style.display = 'none';
+                                    return false;
+                                }
+                                document.getElementById('no-room-warning-post').style.display = 'none';
+                                var address_array = $('#guru_address_button_id').attr('courier_address').split(':');
+                                address_array[3] = $("#post-room").val();
+                                address_array[4] = $('#guru_address_button_id').attr('location');
+                                address_array[5] = $('#guru_address_button_id').attr('courier_city');
+		<?foreach($not_guru_props['ADDRESS'] as $address){?>
+                                if(document.getElementById('soa-property-<?=$address?>')) document.getElementById('soa-property-<?=$address?>').value = address_array.join(':');
+		<?}?>
+                                document.getElementById('guru_post_address').value = address_array.join(':');
+                                if (!document.getElementById('courier-room').value) document.getElementById('courier-room').value = $("#post-room").val();
+                                document.getElementById('go_next').value = 'Y';
+                                document.getElementById('post_thanks').style.display = 'block';
+                            });
+                        </script>
+                        <div id="guru_post_params">
+                            <p id="no-room-warning-post"><? echo Loc::getMessage('FILL_REQ'); ?></p>
+                            <div id="room-input-post" style="padding: 8px 13px 7px;"><span class="pre-input"><? echo Loc::getMessage('APNUM'); ?>:<span
+                                            style="color:red">*</span> </span><input type="text"
+                                                                                     class="delivery-add-params"
+                                                                                     id="post-room"></br><!--</div>-->
+                                <input class="guru_address_button" id="guru_post_button_id" type="button"
+                                       value="<? echo Loc::getMessage('BUTTON_SAVE'); ?>"></input>
+                                <p id="post_thanks"><? echo Loc::getMessage('ADDRESS_SAVED'); ?></p>
+                            </div>
+                        </div>
+
+                        <div class="bx-soa-section-content container-fluid" id="delivery-set"></div>
+
 					</div>
 					<!--	PICKUP BLOCK	-->
 					<div id="bx-soa-pickup" data-visited="false" class="bx-soa-section" style="display:none">
@@ -613,7 +1124,26 @@ else
 			deliveryBlockId: 'bx-soa-delivery',
 			pickUpBlockId: 'bx-soa-pickup',
 			propsBlockId: 'bx-soa-properties',
-			totalBlockId: 'bx-soa-total'
+			totalBlockId: 'bx-soa-total',
+            gurumap: {
+										            closeText: '<?=Loc::getMessage("DATEPICKER_CLOSE")?>',
+										            prevText: '<?=Loc::getMessage("DATEPICKER_NEXT")?>',
+										            nextText: '<?=Loc::getMessage("DATEPICKER_PREV")?>',
+										            currentText: '<?=Loc::getMessage("DATEPICKER_TODAY")?>',
+										            monthNames: ['<?=Loc::getMessage("DATEPICKER_JAN")?>', '<?=Loc::getMessage("DATEPICKER_FEB")?>', '<?=Loc::getMessage("DATEPICKER_MAR")?>', '<?=Loc::getMessage("DATEPICKER_APR")?>', '<?=Loc::getMessage("DATEPICKER_MAY")?>', '<?=Loc::getMessage("DATEPICKER_JUN")?>',
+										            '<?=Loc::getMessage("DATEPICKER_JUL")?>', '<?=Loc::getMessage("DATEPICKER_AUG")?>', '<?=Loc::getMessage("DATEPICKER_SEP")?>', '<?=Loc::getMessage("DATEPICKER_OCT")?>', '<?=Loc::getMessage("DATEPICKER_NOV")?>', '<?=Loc::getMessage("DATEPICKER_DEC")?>'],
+										            monthNamesShort: ['<?=Loc::getMessage("DATEPICKER_JAN")?>', '<?=Loc::getMessage("DATEPICKER_FEB")?>', '<?=Loc::getMessage("DATEPICKER_MAR")?>', '<?=Loc::getMessage("DATEPICKER_APR")?>', '<?=Loc::getMessage("DATEPICKER_MAY")?>', '<?=Loc::getMessage("DATEPICKER_JUN")?>',
+										            '<?=Loc::getMessage("DATEPICKER_JUL")?>', '<?=Loc::getMessage("DATEPICKER_AUG")?>', '<?=Loc::getMessage("DATEPICKER_SEP")?>', '<?=Loc::getMessage("DATEPICKER_OCT")?>', '<?=Loc::getMessage("DATEPICKER_NOV")?>', '<?=Loc::getMessage("DATEPICKER_DEC")?>'],
+										            dayNames: ['<?=Loc::getMessage("DATEPICKER_SUN")?>', '<?=Loc::getMessage("DATEPICKER_MON")?>', '<?=Loc::getMessage("DATEPICKER_TUE")?>', '<?=Loc::getMessage("DATEPICKER_WED")?>', '<?=Loc::getMessage("DATEPICKER_THU")?>', '<?=Loc::getMessage("DATEPICKER_FRI")?>', '<?=Loc::getMessage("DATEPICKER_SAT")?>'],
+										            dayNamesShort: ['<?=Loc::getMessage("DATEPICKER_SSUN")?>', '<?=Loc::getMessage("DATEPICKER_SMON")?>', '<?=Loc::getMessage("DATEPICKER_STUE")?>', '<?=Loc::getMessage("DATEPICKER_SWED")?>', '<?=Loc::getMessage("DATEPICKER_STHU")?>', '<?=Loc::getMessage("DATEPICKER_SFRI")?>', '<?=Loc::getMessage("DATEPICKER_SSAT")?>'],
+										            dayNamesMin: ['<?=Loc::getMessage("DATEPICKER_MSUN")?>', '<?=Loc::getMessage("DATEPICKER_MMON")?>', '<?=Loc::getMessage("DATEPICKER_MTUE")?>', '<?=Loc::getMessage("DATEPICKER_MWED")?>', '<?=Loc::getMessage("DATEPICKER_MTHU")?>', '<?=Loc::getMessage("DATEPICKER_MFRI")?>', '<?=Loc::getMessage("DATEPICKER_MSAT")?>'],
+										            weekHeader: '<?=Loc::getMessage("DATEPICKER_WEE")?>',
+										            dateFormat: 'dd.mm.yy',
+										            firstDay: 1,
+										            isRTL: false,
+										            showMonthAfterYear: false,
+										            yearSuffix: ''
+										        },
 		});
 	</script>
 	<script>
