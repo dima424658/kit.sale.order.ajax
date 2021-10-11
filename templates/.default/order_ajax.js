@@ -1874,6 +1874,98 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 		},
 
+		clickDeliveryNextAction: function(event)
+		{
+			if(!$('#address2').val())
+			{
+				this.showValidationResult(document.querySelectorAll("#address2"), [BX.message('SOA_FIELD') + ' "' + BX.message('SOA_PICKUP_ADDRESS') + '" ' + BX.message('SOA_REQUIRED')]);
+				this.animateScrollTo(this.deliveryBlockNode, 800, 50);
+				return;
+			}
+			else if($('#address2').val() != $('#guru_address_button_id').attr('check_address'))
+			{
+				this.showValidationResult(document.querySelectorAll("#address2"), [BX.message('ENTER_ADDRESS')]);
+				this.animateScrollTo(this.deliveryBlockNode, 800, 50);
+				return;
+			}
+			else
+				this.showValidationResult(document.querySelectorAll("#address2"), []);
+
+			if(!$("#courier-room").val())
+			{
+				this.showValidationResult(document.querySelectorAll("#courier-room"), [BX.message('SOA_FIELD') + ' "' + BX.message('APNUM') + '" ' + BX.message('SOA_REQUIRED')]);
+				this.animateScrollTo(this.deliveryBlockNode, 800, 50);
+				return;
+			}
+			else
+				this.showValidationResult(document.querySelectorAll("#courier-room"), []);
+
+			if(!$('#datepicker').val())
+			{
+				this.showValidationResult(document.querySelectorAll("#datepicker"), [BX.message('SOA_FIELD') + ' "' + BX.message('SELECT_DELIVERY_DATE') + '" ' + BX.message('SOA_REQUIRED')]);
+				this.animateScrollTo(this.deliveryBlockNode, 800, 50);
+				return;
+			}
+			else
+				this.showValidationResult(document.querySelectorAll("#datepicker"), []);
+
+			document.getElementById('guru_address_button_id').click();
+			
+
+			if (!$('#datepicker').val() || !$("#courier-room").val()) {
+
+				for(var j = 0; j < dl_addr.length; j++)
+				{
+					if(document.getElementById('soa-property-'+ dl_addr[j]))
+						document.getElementById('soa-property-'+ dl_addr[j]).value = '';
+				}
+
+				document.getElementById('guru_pvz_chosen_address').value = '';
+				document.getElementById('guru_courier_address').value = '';
+				document.getElementById('guru_post_address').value = '';
+				document.getElementById('go_next').value = 'N';
+				return false;
+			}
+			
+			var address_array = $('#guru_address_button_id').attr('courier_address').split(':');
+			address_array[3] = $("#guru_courier_type").val();
+			address_array[4] = $('#datepicker').val();
+			if (address_array[3] == BX.message('NIGHT_DELIVERY')) {
+				address_array[5] = $("#guru_night_period_start").val() + '_' + $("#guru_night_period_finish").val();
+			} else {
+				address_array[5] = $("#guru_period_start").val() + '_' + $("#guru_period_finish").val();
+			}
+			
+			address_array[6] = $("#courier-room").val();
+			address_array[7] = $("#courier-entrance").val();
+			address_array[8] = $("#courier-intercom").val();
+			address_array[9] = $("#courier-level").val();
+			address_array[10] = $('#guru_address_button_id').attr('location');
+			address_array[11] = $('#guru_address_button_id').attr('courier_city');
+			
+			$.ajax({
+				url: '/local/php_interface/include/save_fio.php',
+				type: "POST",
+				data: { fio: $("#courier-reciever").val() },
+				success: function (result) {
+				}
+			});
+
+			for(var j = 0; j < dl_addr.length; j++)
+			{
+				if(document.getElementById('soa-property-'+ dl_addr[j]))
+					document.getElementById('soa-property-'+ dl_addr[j]).value = address_array.join(':');
+			}
+
+			document.getElementById('guru_courier_address').value = address_array.join(':');
+			document.getElementById('go_next').value = 'Y';
+			
+			if (!document.getElementById('post-room').value)
+				document.getElementById('post-room').value = $("#courier-room").val();
+
+			this.clickNextAction(event);
+		},
+
 		/**
 		 * Hiding current block node and showing next available block node
 		 */
@@ -1960,6 +2052,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			if (this.params.SKIP_USELESS_BLOCK === 'Y')
 			{
+				if (section.id === this.regionBlockNode.id)
+					skip = true;
 				if (section.id === this.pickUpBlockNode.id)
 				{
 					var delivery = this.getSelectedDelivery();
@@ -2121,7 +2215,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					break;
 				case this.regionBlockNode.id:
 					this.editFadeRegionBlock();
-					document.getElementById('guru_address').style.display = 'none';
 					break;
 				case this.paySystemBlockNode.id:
 					BX.remove(this.paySystemBlockNode.querySelector('.alert.alert-warning.alert-hide'));
@@ -2132,6 +2225,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					this.editFadeDeliveryBlock();
 //guru start
 					$('#guru_map').addClass('guru_map_hidden');
+					document.getElementById('guru_address').style.display = 'none';
 					document.getElementById('guru_pvz_data').style.display = 'none';
 					document.getElementById('guru_courier_params').style.display = 'none';
 					document.getElementById('guru_post_params').style.display = 'none';
@@ -2228,11 +2322,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					break;
 				case this.regionBlockNode.id:
 					this.editActiveRegionBlock(true);
-					document.getElementById('guru_address').style.display = 'block';
 					break;
 				case this.deliveryBlockNode.id:
 					this.editActiveDeliveryBlock(true);
 //guru start
+					document.getElementById('guru_address').style.display = 'block';
 					var checked_delivery_items = $('.bx-soa-pp-company.bx-selected');
 					for(var i = 0; i < checked_delivery_items.length; i++){
 						var delid = checked_delivery_items[i].childNodes[0].childNodes[0];
@@ -2323,6 +2417,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				if (allSections[i].id === this.propsBlockNode.id)
 					this.isValidPropertiesBlock();
 
+				if (allSections[i].id === this.deliveryBlockNode.id)
+					this.isValidDeliveryBlock();
+
 				if (!this.checkBlockErrors(allSections[i]) || !this.checkPreload(allSections[i]))
 				{
 					if (this.activeSectionId !== allSections[i].id)
@@ -2373,13 +2470,22 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			if (!isLastNode)
 			{
-				buttons.push(
-					BX.create('A', {
-						props: {href: 'javascript:void(0)', className: 'pull-right btn btn-default btn-md'},
-						html: this.params.MESS_FURTHER,
-						events: {click: BX.proxy(this.clickNextAction, this)}
-					})
-				);
+				if(currentSection.id == "bx-soa-delivery-hidden")
+					buttons.push(
+						BX.create('A', {
+							props: {href: 'javascript:void(0)', className: 'pull-right btn btn-default btn-md'},
+							html: this.params.MESS_FURTHER,
+							events: {click: BX.proxy(this.clickDeliveryNextAction, this)}
+						})
+					);
+				else
+					buttons.push(
+						BX.create('A', {
+							props: {href: 'javascript:void(0)', className: 'pull-right btn btn-default btn-md'},
+							html: this.params.MESS_FURTHER,
+							events: {click: BX.proxy(this.clickNextAction, this)}
+						})
+					);
 			}
 
 			node.appendChild(
@@ -4405,7 +4511,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				this.getErrorContainer(regionContent);
 
-				regionNode = BX.create('DIV', {props: {className: 'bx_soa_location row'}, style: {display: 'none'}});
+				regionNode = BX.create('DIV', {props: {className: 'bx_soa_location row'}});
 				regionNodeCol = BX.create('DIV', {props: {className: 'col-xs-12'}});
 
 				this.getPersonTypeControl(regionNodeCol);
@@ -7449,6 +7555,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			var regionErrors = this.isValidRegionBlock(),
 				propsErrors = this.isValidPropertiesBlock(),
+				deliveryErrors = this.isValidDeliveryBlock(),
 				navigated = false, tooltips, i;
 
 			if (regionErrors.length)
@@ -7459,6 +7566,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			if (propsErrors.length && !navigated)
 			{
+				navigated = true;
 				if (this.activeSectionId == this.propsBlockNode.id)
 				{
 					tooltips = this.propsBlockNode.querySelectorAll('div.tooltip');
@@ -7475,6 +7583,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					this.animateScrollTo(this.propsBlockNode, 800, 50);
 			}
 
+			if(deliveryErrors.length && !navigated)
+			{
+				this.animateScrollTo(this.deliveryBlockNode, 800, 50);
+			}
+
 			if (regionErrors.length)
 			{
 				this.showError(this.regionBlockNode, regionErrors);
@@ -7489,7 +7602,13 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				BX.addClass(this.propsBlockNode, 'bx-step-error');
 			}
 
-			return !(regionErrors.length + propsErrors.length);
+			if (deliveryErrors.length)
+			{
+				this.showError(this.deliveryBlockNode, deliveryErrors);
+				BX.addClass(this.deliveryBlockNode, 'bx-step-error');
+			}
+
+			return !(regionErrors.length + propsErrors.length + deliveryErrors.length);
 		},
 
 		isValidRegionBlock: function()
@@ -7511,6 +7630,24 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 
 			return regionErrors;
+		},
+
+		isValidDeliveryBlock: function()
+		{
+			var deliveryErrors = [];
+			
+			if(!$('#address2').val())
+				deliveryErrors.push([BX.message('SOA_FIELD') + ' "' + BX.message('SOA_PICKUP_ADDRESS') + '" ' + BX.message('SOA_REQUIRED')]);
+			else if($('#address2').val() != $('#guru_address_button_id').attr('check_address'))
+				deliveryErrors.push( [BX.message('ENTER_ADDRESS')]);
+
+			if(!$("#courier-room").val())
+				deliveryErrors.push([BX.message('SOA_FIELD') + ' "' + BX.message('APNUM') + '" ' + BX.message('SOA_REQUIRED')]);
+
+			if(!$('#datepicker').val())
+				deliveryErrors.push([BX.message('SOA_FIELD') + ' "' + BX.message('SELECT_DELIVERY_DATE') + '" ' + BX.message('SOA_REQUIRED')]);
+				
+			return deliveryErrors;
 		},
 
 		isValidPropertiesBlock: function(excludeLocation)

@@ -335,21 +335,6 @@ else
 			echo $arResult['PREPAY_ADIT_FIELDS'];
 		}
 
- /*
-       unset($_SESSION['guru_user_delivery_address']);
-        unset($_SESSION['guru_delivery_address']);
-        unset($_SESSION['guru_delivery_city']);
-
-        unset($_SESSION['guru_delivery_index']);
-
-        unset($_SESSION['guru_check_delivery_address']);
-        unset($_SESSION['guru_delivery_location']);
-        unset($_SESSION['guru_delivery_zip']);
-        unset($_SESSION['guru_delivery_room']);
-
-        unset($_SESSION['guru_delivery_pvz']);
-*/
-
         $guru_props = array();
         $not_guru_props = array();
 
@@ -398,19 +383,19 @@ else
 				<? endif ?>
 
                 <style>
-<?
-                foreach($guru_props as $guru_prop)
-                {
-		foreach($guru_prop as $guru_subprop)
-		{
-?>
-                    DIV[data-property-id-row="<?=$guru_subprop?>"] {
-                        display: none;
-                    }
-<?
-		}
-                }
-?>
+					<?
+						foreach($guru_props as $guru_prop)
+						{
+							foreach($guru_prop as $guru_subprop)
+							{
+					?>
+								DIV[data-property-id-row="<?=$guru_subprop?>"] {
+									display: none;
+								}
+					<?
+							}
+						}
+					?>
 
                     .guru_map_hidden{
                         position: absolute;
@@ -423,27 +408,11 @@ else
                         color: red;
                     }
 
-                    #courier_thanks {
-                        display: none;
-                        color: red;
-                    }
-
-                    .GuruChDeliveryButtonContainer {
-                        width: 100%;
-                        text-align: center;
-                    }
-
-                    .GuruChDeliveryButton {
-                        border: 2px solid rgb(135, 199, 61);
-                        width: 30%;
-                        background-color: rgb(165, 231, 81);
-                    }
-
-	<?foreach($not_guru_props['LOCATION'] as $location){?>
-	DIV[data-property-id-row="<?=$location?>"] {
-                        display: none
-                    }
-	<?}?>
+					<?foreach($not_guru_props['LOCATION'] as $location){?>
+						DIV[data-property-id-row="<?=$location?>"] {
+											display: none
+										}
+					<?}?>
 
                     .col-sm-9 .bx-soa-pp-company-selected {
                         display: none
@@ -455,7 +424,7 @@ else
 
                     #guru_courier_params {
                         display: none;
-                        padding: 8px 13px 7px;
+                        padding: 0px 13px 7px;
                     }
 
                     .delivery-add-params {
@@ -479,19 +448,17 @@ else
                     #night-courier {
                         display: none;
                     }
-
-                    #no-room-warning-courier {
-                        display: none;
-                        color: red;
-                    }
-
                     #no-room-warning-post {
                         display: none;
                         color: red;
                     }
+                    #guru_address_button_id {
+                        display: none !important;
+                    }
                 </style>
 
 				<!--	REGION BLOCK	-->
+				<div style="display:none;">
 				<div id="bx-soa-region" data-visited="false" class="bx-soa-section bx-active">
 					<div class="bx-soa-section-title-container">
 						<h2 class="bx-soa-section-title col-sm-9">
@@ -499,22 +466,10 @@ else
 						</h2>
 						<div class="col-xs-12 col-sm-3 text-right"><a href="" class="bx-soa-editstep"><?=$arParams['MESS_EDIT']?></a></div>
 					</div>
-                        <div id="guru_address" class="guru_delivery_data">
-                            <div style="padding: 8px 13px 7px;"><?=Loc::getMessage('SHOW_YOUR_PLACE')?></div>
-                            <?
-                            $APPLICATION->IncludeComponent(
-                                "kit:dostavka.guru.address",
-                                ".default",
-                                Array(
-                                ),
-                                false
-                            );
-                            ?>
-                        </div>
-                        <span id="no-house-warning"><? echo Loc::getMessage('ENTER_ADDRESS'); ?></span>
 					<div class="bx-soa-section-content container-fluid"></div>
 				</div>
-
+				</div>
+				
 				<? if ($arParams['DELIVERY_TO_PAYSYSTEM'] === 'p2d'): ?>
 					<!--	PAY SYSTEMS BLOCK	-->
 					<div id="bx-soa-paysystem" data-visited="false" class="bx-soa-section bx-active">
@@ -555,7 +510,18 @@ else
 							</h2>
 							<div class="col-xs-12 col-sm-3 text-right"><a href="" class="bx-soa-editstep" id='guru-delivery-edit'><?=$arParams['MESS_EDIT']?></a></div>
 						</div>
-						<div class="bx-soa-section-content container-fluid"></div>
+                        <div id="guru_address" class="guru_delivery_data">
+                            <?
+                            $APPLICATION->IncludeComponent(
+                                "kit:dostavka.guru.address",
+                                ".default",
+                                Array(
+                                ),
+                                false
+                            );
+                            ?>
+                        </div>
+                        <span id="no-house-warning"><? echo Loc::getMessage('ENTER_ADDRESS'); ?></span>
                         <?
                         $delivery_pvz_id = 0;
 
@@ -581,7 +547,6 @@ else
                                 false
                             );
                             ?>
-                            <!--<iframe src="/bitrix/components/bitrix/sale.o666rder.ajax/templates/.default/map_frame.php" id="mapframeid" width="100%">\CA\E0\F0\F2\E0</iframe>-->
                         </div>
                         <div id="guru_pvz_data"></div>
                         <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
@@ -688,8 +653,6 @@ else
                         <input type="hidden" id="guru_pvz_chosen_address" value="">
                         <input type="hidden" id="go_next" value="N">
                         <div id="guru_courier_params">
-                            <p id="no-room-warning-courier"><? echo Loc::getMessage('FILL_REQ'); ?></p>
-                            
 							<div class="form-group bx-soa-customer-field" data-property-id-row="107">
 								<label for="guru_courier_type" class="bx-soa-custom-label"><? echo Loc::getMessage('SELECT_TYPE'); ?></label>
 								<div class="soa-property-container">
@@ -798,9 +761,6 @@ else
                                         <option value="6">6.00</option>
                                 </select>
                             </div>
-                            <input class="guru_address_button" id="guru_courier_button_id" type="button"
-                                   value="<? echo Loc::getMessage('BUTTON_SAVE'); ?>"></input></br>
-                            <p id="courier_thanks"><? echo Loc::getMessage('ADDRESS_SAVED'); ?></p>
                         </div>
                         <script>
 
@@ -875,50 +835,6 @@ else
                                 }
                             }
 
-                            $(document).on('click', '#guru_courier_button_id', function () {
-                                if (!$('#datepicker').val() || !$("#courier-room").val()) {
-                                    document.getElementById('no-room-warning-courier').style.display = 'block';
-		<?foreach($not_guru_props['ADDRESS'] as $address){?>
-                                    if(document.getElementById('soa-property-<?=$address?>')) document.getElementById('soa-property-<?=$address?>').value = '';
-		<?}?>
-                                    document.getElementById('guru_pvz_chosen_address').value = '';
-                                    document.getElementById('guru_courier_address').value = '';
-                                    document.getElementById('guru_post_address').value = '';
-                                    document.getElementById('go_next').value = 'N';
-                                    document.getElementById('courier_thanks').style.display = 'none';
-                                    return false;
-                                }
-                                document.getElementById('no-room-warning-courier').style.display = 'none';
-                                var address_array = $('#guru_address_button_id').attr('courier_address').split(':');
-                                address_array[3] = $("#guru_courier_type").val();
-                                address_array[4] = $('#datepicker').val();
-                                if (address_array[3] == '<?=Loc::getMessage('NIGHT_DELIVERY')?>') {
-                                    address_array[5] = $("#guru_night_period_start").val() + '_' + $("#guru_night_period_finish").val();
-                                } else {
-                                    address_array[5] = $("#guru_period_start").val() + '_' + $("#guru_period_finish").val();
-                                }
-                                address_array[6] = $("#courier-room").val();
-                                address_array[7] = $("#courier-entrance").val();
-                                address_array[8] = $("#courier-intercom").val();
-                                address_array[9] = $("#courier-level").val();
-                                address_array[10] = $('#guru_address_button_id').attr('location');
-                                address_array[11] = $('#guru_address_button_id').attr('courier_city');
-
-                                $.ajax({
-                                	url: '/local/php_interface/include/save_fio.php',
-                                	type: "POST",
-                                	data: {fio: $("#courier-reciever").val()},
-                                	success: function (result) {
-                                	}
-                                });
-		<?foreach($not_guru_props['ADDRESS'] as $address){?>
-                                if(document.getElementById('soa-property-<?=$address?>')) document.getElementById('soa-property-<?=$address?>').value = address_array.join(':');
-		<?}?>
-                                document.getElementById('guru_courier_address').value = address_array.join(':');
-                                document.getElementById('go_next').value = 'Y';
-                                if (!document.getElementById('post-room').value) document.getElementById('post-room').value = $("#courier-room").val();
-                                document.getElementById('courier_thanks').style.display = 'block';
-                            });
                             $(document).on('click', '#guru_post_button_id', function () {
                                 if (!$("#post-room").val()) {
                                     document.getElementById('no-room-warning-post').style.display = 'block';
