@@ -42,7 +42,7 @@ if (empty($action))
 global $APPLICATION;
 
 $APPLICATION->IncludeComponent(
-	'kit:sale.order.ajax',
+	'dima424658:sale.order.ajax',
 	'.default',
 	$params
 );

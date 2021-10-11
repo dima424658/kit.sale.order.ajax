@@ -4405,7 +4405,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				this.getErrorContainer(regionContent);
 
-				regionNode = BX.create('DIV', {props: {className: 'bx_soa_location row'}});
+				regionNode = BX.create('DIV', {props: {className: 'bx_soa_location row'}, style: {display: 'none'}});
 				regionNodeCol = BX.create('DIV', {props: {className: 'col-xs-12'}});
 
 				this.getPersonTypeControl(regionNodeCol);

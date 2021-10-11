@@ -689,34 +689,62 @@ else
                         <input type="hidden" id="go_next" value="N">
                         <div id="guru_courier_params">
                             <p id="no-room-warning-courier"><? echo Loc::getMessage('FILL_REQ'); ?></p>
-                            <span class="pre-input"><? echo Loc::getMessage('SELECT_TYPE'); ?></span>
-                            <select id="guru_courier_type" onchange="changeType();">
-                                <option value='<? echo Loc::getMessage('KDELIVERY'); ?>'
-                                        selected><? echo Loc::getMessage('KDELIVERY'); ?></option>
-                                <option value='<? echo Loc::getMessage('EXDELIVERY'); ?>'><? echo Loc::getMessage('EXDELIVERY'); ?></option>
-                                <option value='<? echo Loc::getMessage('NIGHT_DELIVERY'); ?>'><? echo Loc::getMessage('NIGHT_DELIVERY'); ?></option>
-                            </select>
-                            </br>
-                            <div id="room-input-courier"><span
-                                        class="pre-input"><? echo Loc::getMessage('APNUM'); ?>:<span
-                                            style="color:red">*</span> </span><input type="text"
-                                                                                     class="delivery-add-params"
-                                                                                     id="courier-room"></br></br></div>
-                            <span class="pre-input"><? echo Loc::getMessage('ENTRANCE'); ?>: </span><input type="text"
-                                                                                                           class="delivery-add-params"
-                                                                                                           id="courier-entrance"></br></br>
-                            <span class="pre-input"><? echo Loc::getMessage('HOME_PHONE'); ?>:</span><input type="text"
-                                                                                                            class="delivery-add-params"
-                                                                                                            id="courier-intercom"></br></br>
-                            <span class="pre-input"><? echo Loc::getMessage('STAGE'); ?>: </span><input type="text"
-                                                                                                        class="delivery-add-params"
-                                                                                                        id="courier-level"></br></br>
-							<span class="pre-input"><? echo Loc::getMessage('RECEIVER'); ?>: </span><input type="text"
-                                                                                                        class="delivery-add-params"
-                                                                                                        id="courier-reciever"></br></br>
-                            <span class="pre-input"><? echo Loc::getMessage('SELECT_DELIVERY_DATE'); ?>:<span
-                                        style="color:red">*</span> </span><input type="text" id="datepicker" autocomplete="off" onChange="setPeriods();">
-                            <br>
+                            
+							<div class="form-group bx-soa-customer-field" data-property-id-row="107">
+								<label for="guru_courier_type" class="bx-soa-custom-label"><? echo Loc::getMessage('SELECT_TYPE'); ?></label>
+								<div class="soa-property-container">
+									<select id="guru_courier_type" onchange="changeType();">
+										<option value='<? echo Loc::getMessage('KDELIVERY'); ?>' selected>Обычная доставка</option>
+										<option value='<? echo Loc::getMessage('EXDELIVERY'); ?>'>Экспресс доставка</option>
+										<option value='<? echo Loc::getMessage('NIGHT_DELIVERY'); ?>'>Ночная доставка</option>
+									</select>
+								</div>
+							</div>
+							<div class="form-group bx-soa-customer-field" data-property-id-row="106">
+								<label for="room-input-courier" class="bx-soa-custom-label">
+									<span class="bx-authform-starrequired">*</span>
+									<? echo Loc::getMessage('APNUM'); ?></label>
+								<div class="soa-property-container">
+									<input type="text" size="40" id="courier-room" placeholder="" class="form-control bx-soa-customer-input bx-ios-fix">
+								</div>
+							</div>																			
+							<div class="form-group bx-soa-customer-field" data-property-id-row="101">
+								<label for="courier-entrance" class="bx-soa-custom-label">
+									<? echo Loc::getMessage('ENTRANCE'); ?></label>
+								<div class="soa-property-container">
+									<input type="text" size="40" id="courier-entrance" placeholder="" class="form-control bx-soa-customer-input bx-ios-fix">
+								</div>
+							</div>
+							<div class="form-group bx-soa-customer-field" data-property-id-row="102">
+								<label for="courier-intercom" class="bx-soa-custom-label">
+									<? echo Loc::getMessage('HOME_PHONE'); ?></label>
+								<div class="soa-property-container">
+									<input type="text" size="40" id="courier-intercom" placeholder="" class="form-control bx-soa-customer-input bx-ios-fix">
+								</div>
+							</div>
+							<div class="form-group bx-soa-customer-field" data-property-id-row="103">
+								<label for="courier-level" class="bx-soa-custom-label">
+									<? echo Loc::getMessage('STAGE'); ?></label>
+								<div class="soa-property-container">
+									<input type="text" size="40" id="courier-level" placeholder="" class="form-control bx-soa-customer-input bx-ios-fix">
+								</div>
+							</div>
+							<div class="form-group bx-soa-customer-field" data-property-id-row="104">
+								<label for="courier-reciever" class="bx-soa-custom-label">
+									<? echo Loc::getMessage('RECEIVER'); ?></label>
+								<div class="soa-property-container">
+									<input type="text" size="40" id="courier-reciever" placeholder="" class="form-control bx-soa-customer-input bx-ios-fix">
+								</div>
+							</div>
+							<div class="form-group bx-soa-customer-field" data-property-id-row="105">
+								<label for="datepicker" class="bx-soa-custom-label">
+									<span class="bx-authform-starrequired">*</span>
+									<? echo Loc::getMessage('SELECT_DELIVERY_DATE'); ?></label>
+								<div class="soa-property-container">
+									<input type="text" size="40" id="datepicker" autocomplete="off" placeholder="" class="form-control bx-soa-customer-input bx-ios-fix" onChange="setPeriods();">
+								</div>
+							</div>
+							
                             <div id="day-courier">
                                 <? echo Loc::getMessage('DELFROM'); ?>&nbsp;<select name="start" id="guru_period_start"
                                                                                     onchange="changeStart();">
