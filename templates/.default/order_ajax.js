@@ -1,5 +1,7 @@
 BX.namespace('BX.Sale.OrderAjaxComponent');
 
+var $j = jQuery.noConflict();
+
 (function() {
 	'use strict';
 
@@ -71,6 +73,13 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			this.isHttps = window.location.protocol === "https:";
 			this.orderSaveAllowed = false;
 			this.socServiceHiddenNode = false;
+
+			this.deliveryType = "ДОСТАВКА";
+			this.deliveryTypeProp = null;
+			this.deliveryAddrProp = null;
+			this.deliveryRoomProp = null;
+			this.deliveryDays = 2;
+						
 		},
 
 		/**
@@ -264,99 +273,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						}
 						BX.cleanNode(this.savedFilesBlockNode);
 
-//guru start
-						var checked_delivery_items = $('.bx-soa-pp-company.bx-selected');
-						for(var i = 0; i < checked_delivery_items.length; i++){
-							var delid = checked_delivery_items[i].childNodes[0].childNodes[0];
-							if(delid) {
-								var delid_code = dl[delid.id];
+						//this.deliveryAddrProp.setValue('');
 
-								if(delid_code)
-								{
-									if( (delid_code != 'Guru_pvz') && (delid_code != 'Guru_Courier') && (delid_code != 'Guru_Post') ) {
-										$( "#datepicker" ).datepicker( "destroy" );
-										for(var j = 0; j < dl_addr.length; j++){
-											if($('div[data-property-id-row="' + dl_addr[j] + '"]')) $('div[data-property-id-row="' + dl_addr[j] + '"]').show();
-											if($('#address2').val() && $('div[data-property-id-row="' + dl_addr[j] + '"]')) $('div[data-property-id-row="' + dl_addr[j] + '"]').val($('#address2').val());
-											else if(document.getElementById('soa-property-'+ dl_addr[j])) $('div[data-property-id-row="' + dl_addr[j] + '"]').val('');
-										}
-									}
-							
-									if(delid_code == 'Guru_pvz'){
-										$( "#datepicker" ).datepicker( "destroy" );
-										$('#guru_map').removeClass('guru_map_hidden');
-										document.getElementById('guru_pvz_data').style.display = 'block';
-										for(var j = 0; j < dl_addr.length; j++){
-											if($('div[data-property-id-row="' + dl_addr[j] + '"]')) $('div[data-property-id-row="' + dl_addr[j] + '"]').hide();
-								            			if(document.getElementById('soa-property-'+ dl_addr[j]) && document.getElementById('guru_pvz_chosen_address').value) document.getElementById('soa-property-'+ dl_addr[j]).value = document.getElementById('guru_pvz_chosen_address').value;
-											else if(document.getElementById('soa-property-'+ dl_addr[j])) $('div[data-property-id-row="' + dl_addr[j] + '"]').val('');
-										}
-										if(document.getElementById('guru_pvz_chosen_address').value) document.getElementById('go_next').value = 'Y';
-										else document.getElementById('go_next').value = 'N';
-							        		}else{
-										$('#guru_map').addClass('guru_map_hidden');
-										document.getElementById('guru_pvz_data').style.display = 'none';
-									}
-									if(delid_code == 'Guru_Courier'){
-										$( "#datepicker" ).datepicker( "destroy" );
-										document.getElementById('guru_courier_params').style.display = 'block';
-										
-										$( "#datepicker" ).datepicker({
-											timepicker : false,
-											dateFormat : 'dd.mm.yy',
-											minDate : "+"+deldays
-										});
-										$("#datepicker").datepicker({
-											inline: true,
-											changeYear: true,
-											changeMonth: true
-										});
-							   
-										jQuery(function ($) {
-										        $.datepicker.regional['ru'] = this.gurumap;
-										        $.datepicker.setDefaults($.datepicker.regional['ru']);
-										});
-							
-										for(var j = 0; j < dl_addr.length; j++){
-											if($('div[data-property-id-row="' + dl_addr[j] + '"]')) $('div[data-property-id-row="' + dl_addr[j] + '"]').hide();
-								            			if(document.getElementById('soa-property-'+ dl_addr[j]) && document.getElementById('guru_courier_address').value) document.getElementById('soa-property-'+ dl_addr[j]).value = document.getElementById('guru_courier_address').value;
-											else if(document.getElementById('soa-property-'+ dl_addr[j])) $('div[data-property-id-row="' + dl_addr[j] + '"]').val('');
-										}
-							
-										if(document.getElementById('guru_courier_address').value) document.getElementById('go_next').value = 'Y';
-										else document.getElementById('go_next').value = 'N';
-									}else{
-										document.getElementById('guru_courier_params').style.display = 'none';
-									}
-									if(delid_code == 'Guru_Post'){
-										$( "#datepicker" ).datepicker( "destroy" );
-										document.getElementById('guru_post_params').style.display = 'block';
-							
-										for(var j = 0; j < dl_fio.length; j++){
-								            			if(document.getElementById('soa-property-'+ dl_fio[j])) $('label[for="soa-property-'+ dl_fio[j] + '"]').html($('label[for="soa-property-'+ dl_fio[j] + '"]').html().replace('<p>' + BX.message("GURU_POST_WARNING") + '</p>', ''));
-										}
-							
-										for(var j = 0; j < dl_addr.length; j++){
-											if($('div[data-property-id-row="' + dl_addr[j] + '"]')) $('div[data-property-id-row="' + dl_addr[j] + '"]').hide();
-								            			if(document.getElementById('soa-property-'+ dl_addr[j]) && document.getElementById('guru_post_address').value) document.getElementById('soa-property-'+ dl_addr[j]).value = document.getElementById('guru_post_address').value;
-											else if(document.getElementById('soa-property-'+ dl_addr[j])) $('div[data-property-id-row="' + dl_addr[j] + '"]').val('');
-										}
-							
-										if(document.getElementById('guru_post_address').value) document.getElementById('go_next').value = 'Y';
-										else document.getElementById('go_next').value = 'N';
-										if($('#guru_address_button_id').attr('room')) document.getElementById('guru_post_button_id').click();
-									}else{
-							
-										for(var j = 0; j < dl_fio.length; j++){
-								            			if(document.getElementById('soa-property-'+ dl_fio[j])) $('label[for="soa-property-'+ dl_fio[j]+'"]').html($('label[for="soa-property-'+ dl_fio[j] + '"]').html().replace('<p>' + BX.message("GURU_POST_WARNING") + '</p>', ''));
-										}
-							
-										document.getElementById('guru_post_params').style.display = 'none';
-									}
-								}
-							}
-						}
-//guru end
 						this.endLoader();
 					}, this),
 					onfailure: BX.delegate(function(){
@@ -1874,98 +1792,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 		},
 
-		clickDeliveryNextAction: function(event)
-		{
-			if(!$('#address2').val())
-			{
-				this.showValidationResult(document.querySelectorAll("#address2"), [BX.message('SOA_FIELD') + ' "' + BX.message('SOA_PICKUP_ADDRESS') + '" ' + BX.message('SOA_REQUIRED')]);
-				this.animateScrollTo(this.deliveryBlockNode, 800, 50);
-				return;
-			}
-			else if($('#address2').val() != $('#guru_address_button_id').attr('check_address'))
-			{
-				this.showValidationResult(document.querySelectorAll("#address2"), [BX.message('ENTER_ADDRESS')]);
-				this.animateScrollTo(this.deliveryBlockNode, 800, 50);
-				return;
-			}
-			else
-				this.showValidationResult(document.querySelectorAll("#address2"), []);
-
-			if(!$("#courier-room").val())
-			{
-				this.showValidationResult(document.querySelectorAll("#courier-room"), [BX.message('SOA_FIELD') + ' "' + BX.message('APNUM') + '" ' + BX.message('SOA_REQUIRED')]);
-				this.animateScrollTo(this.deliveryBlockNode, 800, 50);
-				return;
-			}
-			else
-				this.showValidationResult(document.querySelectorAll("#courier-room"), []);
-
-			if(!$('#datepicker').val())
-			{
-				this.showValidationResult(document.querySelectorAll("#datepicker"), [BX.message('SOA_FIELD') + ' "' + BX.message('SELECT_DELIVERY_DATE') + '" ' + BX.message('SOA_REQUIRED')]);
-				this.animateScrollTo(this.deliveryBlockNode, 800, 50);
-				return;
-			}
-			else
-				this.showValidationResult(document.querySelectorAll("#datepicker"), []);
-
-			document.getElementById('guru_address_button_id').click();
-			
-
-			if (!$('#datepicker').val() || !$("#courier-room").val()) {
-
-				for(var j = 0; j < dl_addr.length; j++)
-				{
-					if(document.getElementById('soa-property-'+ dl_addr[j]))
-						document.getElementById('soa-property-'+ dl_addr[j]).value = '';
-				}
-
-				document.getElementById('guru_pvz_chosen_address').value = '';
-				document.getElementById('guru_courier_address').value = '';
-				document.getElementById('guru_post_address').value = '';
-				document.getElementById('go_next').value = 'N';
-				return false;
-			}
-			
-			var address_array = $('#guru_address_button_id').attr('courier_address').split(':');
-			address_array[3] = $("#guru_courier_type").val();
-			address_array[4] = $('#datepicker').val();
-			if (address_array[3] == BX.message('NIGHT_DELIVERY')) {
-				address_array[5] = $("#guru_night_period_start").val() + '_' + $("#guru_night_period_finish").val();
-			} else {
-				address_array[5] = $("#guru_period_start").val() + '_' + $("#guru_period_finish").val();
-			}
-			
-			address_array[6] = $("#courier-room").val();
-			address_array[7] = $("#courier-entrance").val();
-			address_array[8] = $("#courier-intercom").val();
-			address_array[9] = $("#courier-level").val();
-			address_array[10] = $('#guru_address_button_id').attr('location');
-			address_array[11] = $('#guru_address_button_id').attr('courier_city');
-			
-			$.ajax({
-				url: '/local/php_interface/include/save_fio.php',
-				type: "POST",
-				data: { fio: $("#courier-reciever").val() },
-				success: function (result) {
-				}
-			});
-
-			for(var j = 0; j < dl_addr.length; j++)
-			{
-				if(document.getElementById('soa-property-'+ dl_addr[j]))
-					document.getElementById('soa-property-'+ dl_addr[j]).value = address_array.join(':');
-			}
-
-			document.getElementById('guru_courier_address').value = address_array.join(':');
-			document.getElementById('go_next').value = 'Y';
-			
-			if (!document.getElementById('post-room').value)
-				document.getElementById('post-room').value = $("#courier-room").val();
-
-			this.clickNextAction(event);
-		},
-
 		/**
 		 * Hiding current block node and showing next available block node
 		 */
@@ -2052,8 +1878,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			if (this.params.SKIP_USELESS_BLOCK === 'Y')
 			{
-				if (section.id === this.regionBlockNode.id)
-					skip = true;
 				if (section.id === this.pickUpBlockNode.id)
 				{
 					var delivery = this.getSelectedDelivery();
@@ -2223,13 +2047,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				case this.deliveryBlockNode.id:
 					BX.remove(this.deliveryBlockNode.querySelector('.alert.alert-warning.alert-hide'));
 					this.editFadeDeliveryBlock();
-//guru start
-					$('#guru_map').addClass('guru_map_hidden');
-					document.getElementById('guru_address').style.display = 'none';
-					document.getElementById('guru_pvz_data').style.display = 'none';
-					document.getElementById('guru_courier_params').style.display = 'none';
-					document.getElementById('guru_post_params').style.display = 'none';
-//guru end
 					break;
 				case this.pickUpBlockNode.id:
 					this.editFadePickUpBlock();
@@ -2325,36 +2142,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					break;
 				case this.deliveryBlockNode.id:
 					this.editActiveDeliveryBlock(true);
-//guru start
-					document.getElementById('guru_address').style.display = 'block';
-					var checked_delivery_items = $('.bx-soa-pp-company.bx-selected');
-					for(var i = 0; i < checked_delivery_items.length; i++){
-						var delid = checked_delivery_items[i].childNodes[0].childNodes[0];
-						if(delid) {
-							var delid_code = dl[delid.id];
-							if(delid_code)
-							{
-								if(delid_code == 'Guru_pvz'){
-									$('#guru_map').removeClass('guru_map_hidden');
-									document.getElementById('guru_pvz_data').style.display = 'block';
-						        		}else{
-									$('#guru_map').addClass('guru_map_hidden');
-									document.getElementById('guru_pvz_data').style.display = 'none';
-								}
-								if(delid_code == 'Guru_Courier'){
-									document.getElementById('guru_courier_params').style.display = 'block';
-								}else{
-									document.getElementById('guru_courier_params').style.display = 'none';
-								}
-								if(delid_code == 'Guru_Post'){
-									document.getElementById('guru_post_params').style.display = 'block';
-								}else{
-									document.getElementById('guru_post_params').style.display = 'none';
-								}
-							}
-						}
-					}
-//guru end
 					break;
 				case this.paySystemBlockNode.id:
 					this.editActivePaySystemBlock(true);
@@ -2414,11 +2201,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				if (allSections[i].id === this.regionBlockNode.id)
 					this.isValidRegionBlock();
 
-				if (allSections[i].id === this.propsBlockNode.id)
-					this.isValidPropertiesBlock();
-
 				if (allSections[i].id === this.deliveryBlockNode.id)
 					this.isValidDeliveryBlock();
+
+				if (allSections[i].id === this.propsBlockNode.id)
+					this.isValidPropertiesBlock();
 
 				if (!this.checkBlockErrors(allSections[i]) || !this.checkPreload(allSections[i]))
 				{
@@ -2470,12 +2257,15 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			if (!isLastNode)
 			{
-				if(currentSection.id == "bx-soa-delivery-hidden")
+				if(currentSection.id.startsWith('bx-soa-delivery'))
 					buttons.push(
 						BX.create('A', {
 							props: {href: 'javascript:void(0)', className: 'pull-right btn btn-default btn-md'},
 							html: this.params.MESS_FURTHER,
-							events: {click: BX.proxy(this.clickDeliveryNextAction, this)}
+							events: {click: BX.delegate(function(event){
+									this.confirmAddress();
+									this.clickNextAction(event);
+								}, this),}
 						})
 					);
 				else
@@ -2695,7 +2485,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				this.deliveryBlockNode.style.display = 'none';
 			}
 
-			this.orderSaveBlockNode.style.display = this.result.SHOW_AUTH ? 'none' : '';
+			this.orderSaveBlockNode.style.display = 'none';
 			this.mobileTotalBlockNode.style.display = this.result.SHOW_AUTH ? 'none' : '';
 
 			this.checkPickUpShow();
@@ -5586,7 +5376,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		editActiveDeliveryBlock: function(activeNodeMode)
 		{
 			var node = activeNodeMode ? this.deliveryBlockNode : this.deliveryHiddenBlockNode,
-				deliveryContent, deliveryNode;
+				deliveryContent, deliveryNode, validationErrors;
 
 			if (this.initialized.delivery)
 			{
@@ -5615,15 +5405,312 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					this.editCoupons(deliveryContent);
 
 				this.getBlockFooter(deliveryContent);
+
+				if (this.deliveryBlockNode.getAttribute('data-visited') === 'true')
+				{
+					validationErrors = this.isValidDeliveryBlock(true);
+					if (validationErrors.length)
+						BX.addClass(this.deliveryBlockNode, 'bx-step-error');
+					else
+						BX.removeClass(this.deliveryBlockNode, 'bx-step-error');
+				}
 			}
 		},
 
-		editDeliveryItems: function(deliveryNode)
-		{
-			if (!this.result.DELIVERY || this.result.DELIVERY.length <= 0)
-				return;
+		guruUpdateAddress: function (callback = null) {
+			if ($('#address2').val() != $('#guru_address_button_id').attr('check_address') || !$('#address2').val())
+				return false;
 
-			var deliveryItemsContainer = BX.create('DIV', {props: {className: 'col-sm-7 bx-soa-pp-item-container'}}),
+			var courier_address = $('#guru_address_button_id').attr('courier_address'),
+			user_address = $('#guru_address_button_id').attr('user_address'),
+			courier_city = $('#guru_address_button_id').attr('courier_city'),
+			check_address = $('#guru_address_button_id').attr('check_address'),
+			guru_location = $('#guru_address_button_id').attr('location'),
+			guru_zip = $('#guru_address_button_id').attr('zip'),
+			guru_room = $('#guru_address_button_id').attr('room');
+
+			this.deliveryAddrProp.setValue('');
+
+			$.ajax({
+				url: '/local/php_interface/include/ajax_session.php',
+				type: "POST",
+				data: {
+					guru_delivery_address: courier_address,
+					guru_delivery_city: courier_city,
+					guru_user_delivery_address: user_address,
+					guru_check_delivery_address: check_address,
+					guru_delivery_location: guru_location,
+					guru_delivery_zip: guru_zip,
+					guru_delivery_room: guru_room
+				},
+				success: function (result) {
+					$.post('/local/php_interface/include/guru_methods.php', {
+						method: 'get_pvz_codes_2',
+						init: 'get_pvz'
+					}).done(function (data) {
+
+						BX.Sale.OrderAjaxComponent.sendRequest();
+
+						if ($('#guru_address_button_id').attr('room'))
+							document.getElementById('courier-room').value = $('#guru_address_button_id').attr('room');
+						else
+							document.getElementById('courier-room').value = '';
+
+						if(callback != null)
+							callback();
+					});
+				}
+			});
+		},
+
+		changeAddress: function(event)
+		{
+			var key = 'cc03e747a6afbbcbf8be7668acfebee5';
+			var id = '9999';
+			$.post('https://api.dostavka.guru/client/dd_2_ch.php', {
+				str: $('#address2').val(),
+				key: key,
+				id: id
+			}).done(function(data) {
+				$('.response_addr').html(data);
+			});
+		},
+
+		confirmAddress: function()
+		{
+			console.log('confirmAddress');
+			
+			if(!$('#address2').val())
+			{
+				this.showValidationResult(document.querySelectorAll("#address2"), [BX.message('SOA_FIELD') + ' "' + BX.message('SOA_PICKUP_ADDRESS') + '" ' + BX.message('SOA_REQUIRED')]);
+				this.animateScrollTo(this.deliveryBlockNode, 800, 50);
+				return;
+			}
+
+			else if($('#guru_address_button_id').attr('check_address') != $('#address2').val())
+			{
+				this.showValidationResult(document.querySelectorAll("#address2"), [BX.message('ENTER_ADDRESS')]);
+				this.animateScrollTo(this.deliveryBlockNode, 800, 50);
+				return;
+			}
+			else
+			{
+				this.showValidationResult(document.querySelectorAll("#address2"), []);
+			}
+
+			if ($('#guru_address_button_id').attr('room'))
+				document.getElementById('courier-room').value = $('#guru_address_button_id').attr('room');
+
+			this.guruUpdateAddress(BX.delegate(function () {
+				this.changeDeliveryDays();
+			}, this));
+
+			if (!$('#datepicker').val() || !$("#courier-room").val()) {
+				console.log($('#datepicker').val() + ' ' + $("#courier-room").val());
+				this.deliveryAddrProp.setValue('');
+				return false;
+			}
+			
+			var address_array = $('#guru_address_button_id').attr('courier_address').split(':');
+			address_array[3] = this.deliveryType;
+			address_array[4] = $('#datepicker').val();
+
+			switch (address_array[3])
+			{
+				case BX.message('KDELIVERY'):
+					address_array[5] = $("#guru_period_start").val() + '_' + $("#guru_period_finish").val();
+					break;
+				case BX.message('EXDELIVERY'):
+					address_array[5] = $("#guru_express_period_start").val() + '_' + $("#guru_express_period_finish").val();
+					break;
+				case BX.message('NIGHT_DELIVERY'):
+					address_array[5] = $("#guru_night_period_start").val() + '_' + $("#guru_night_period_finish").val();
+					break;
+			}
+			
+			address_array[6] = $("#courier-room").val();
+			address_array[7] = $("#courier-entrance").val();
+			address_array[8] = $("#courier-intercom").val();
+			address_array[9] = $("#courier-level").val();
+			address_array[10] = $('#guru_address_button_id').attr('location');
+			address_array[11] = $('#guru_address_button_id').attr('courier_city');
+			
+			$.ajax({
+				url: '/local/php_interface/include/save_fio.php',
+				type: "POST",
+				data: { fio: $("#courier-reciever").val() },
+				success: function (result) {
+				}
+			});
+
+			this.deliveryAddrProp.setValue(address_array.join(':'));
+		},
+
+		addFromToTime: function (deliveryItemsContainer, showType = BX.message('KDELIVERY')) {
+			// -------------------------- День --------------------------
+			var dayContainer = BX.create('DIV', { props: { id: 'day-courier' }, style: { display: 'flex' } }),
+			dayStart = BX.create('SELECT',
+				{
+					props: { name: 'start', id: 'guru_period_start' },
+					events: {
+						change: BX.delegate(function (e) {
+							var start = parseInt($("#guru_period_start").val());
+							if(parseInt($("#guru_period_finish").val()) - start < 3)
+								$("#guru_period_finish").val(start + 3);
+							this.changeDeliveryDays();
+						}, this)
+					}
+				}),
+			dayFinish = BX.create('SELECT',
+				{
+					props: { name: 'finish', id: 'guru_period_finish' },
+					events: {
+						change: BX.delegate(function (e) {
+							var finish = parseInt($("#guru_period_finish").val())
+							if(finish - parseInt($("#guru_period_start").val()) < 3)
+								$("#guru_period_start").val(finish - 3);
+							this.changeDeliveryDays();
+						}, this)
+					}
+				});
+	
+			for (var i = 9; i <= 19; ++i)
+					dayStart.appendChild(BX.create('OPTION', { props: { value: i }, text: i + '.00' }));
+
+			for (var i = 12; i <= 22; ++i)
+					dayFinish.appendChild(BX.create('OPTION', { props: { value: i }, text: i + '.00' }));
+			
+			dayContainer.appendChild(BX.create('LABEL', { text: BX.message('DELFROM'), style: { margin: '0 5px' } }));
+			dayContainer.appendChild(dayStart);
+
+			dayContainer.appendChild(BX.create('LABEL', { text: BX.message('DELTO'), style: { margin: '0 5px' } }));
+			dayContainer.appendChild(dayFinish);
+			// -------------------------- День --------------------------
+
+			// -------------------------- Экспресс --------------------------
+			var expressContainer = BX.create('DIV', { props: { id: 'express-courier' }, style: { display: 'flex' } }),
+			expressStart = BX.create('SELECT',
+				{
+					props: { name: 'start', id: 'guru_express_period_start' },
+					events: {
+						change: BX.delegate(function (e) {
+							if(parseInt($("#guru_express_period_start").val()) == 16)
+								$("#guru_express_period_finish").val(19);
+							else
+								$("#guru_express_period_finish").val(22);
+
+							this.changeDeliveryDays();
+						}, this)
+					}
+				}),
+			expressFinish = BX.create('SELECT',
+				{
+					props: { name: 'finish', id: 'guru_express_period_finish' },
+					events: {
+						change: BX.delegate(function (e) {
+							if(parseInt($("#guru_express_period_finish").val()) == 19)
+								$("#guru_express_period_start").val(16);
+							else
+								$("#guru_express_period_start").val(19);
+							
+							this.changeDeliveryDays();
+						}, this)
+					}
+				});
+	
+			expressStart.appendChild(BX.create('OPTION', { props: { value: 16 }, text: '16.00' }));
+			expressFinish.appendChild(BX.create('OPTION', { props: { value: 19 }, text: '19.00' }));
+
+			expressStart.appendChild(BX.create('OPTION', { props: { value: 19 }, text: '19.00' }));
+			expressFinish.appendChild(BX.create('OPTION', { props: { value: 22 }, text: '22.00' }));
+			
+			expressContainer.appendChild(BX.create('LABEL', { text: BX.message('DELFROM'), style: { margin: '0 5px' } }));
+			expressContainer.appendChild(expressStart);
+
+			expressContainer.appendChild(BX.create('LABEL', { text: BX.message('DELTO'), style: { margin: '0 5px' } }));
+			expressContainer.appendChild(expressFinish);
+			// -------------------------- Экспресс --------------------------
+		
+			// --------------------------   Ночь   --------------------------
+			var nightContainer = BX.create('DIV', { props: { id: 'night-courier' }, style: { display: 'flex' } }),
+				nightStart = BX.create('SELECT',
+					{
+						props: { name: 'start', id: 'guru_night_period_start' },
+						events: {
+							change: BX.delegate(function (e) {
+								if(parseInt($("#guru_night_period_start").val()) == 22)
+									$("#guru_night_period_finish").val(2);
+								else
+									$("#guru_night_period_finish").val(6);
+								this.changeDeliveryDays();
+							}, this)
+						}
+					}),
+
+				nightFinish = BX.create('SELECT',
+					{
+						props: { name: 'finish', id: 'guru_night_period_finish' },
+						events: {
+							change: BX.delegate(function (e) {
+								if(parseInt($("#guru_night_period_finish").val()) == 2)
+									$("#guru_night_period_start").val(22);
+								else
+									$("#guru_night_period_start").val(2);
+								this.changeDeliveryDays();
+							}, this)
+						}
+					});
+
+			nightStart.appendChild(BX.create('OPTION', { props: { value: 22 }, text: '22.00' }));
+			nightFinish.appendChild(BX.create('OPTION', { props: { value: 2 }, text: '02.00' }));
+
+			nightStart.appendChild(BX.create('OPTION', { props: { value: 2 }, text: '02.00' }));
+			nightFinish.appendChild(BX.create('OPTION', { props: { value: 6 }, text: '06.00' }));
+
+			nightContainer.appendChild(BX.create('LABEL', { text: BX.message('DELFROM'), style: { margin: '0 5px' } }));
+			nightContainer.appendChild(nightStart);
+
+			nightContainer.appendChild(BX.create('LABEL', { text: BX.message('DELTO'), style: { margin: '0 5px' } }));
+			nightContainer.appendChild(nightFinish);
+			// --------------------------   Ночь   --------------------------
+
+			var formContainer = BX.create('DIV', {props: {className: 'form-group bx-soa-customer-field'}});
+			formContainer.appendChild(BX.create('LABEL', {
+				props: {className: 'bx-soa-custom-label'},
+				html: '<span class="bx-authform-starrequired">*</span> Время доставки'
+			}));
+			
+			var propContainer = BX.create('DIV', {props: {className: 'soa-property-container', id: "courierTimeContainer"}});
+			propContainer.appendChild(dayContainer);
+			propContainer.appendChild(expressContainer);
+			propContainer.appendChild(nightContainer);
+			formContainer.appendChild(propContainer);
+			
+			switch (showType)
+			{
+				default:
+					dayContainer.style.display = 'none';
+				case BX.message('KDELIVERY'):
+					expressContainer.style.display = 'none';
+					nightContainer.style.display = 'none';
+					break;
+				case BX.message('EXDELIVERY'):
+					dayContainer.style.display = 'none';
+					nightContainer.style.display = 'none';
+					break;
+				case BX.message('NIGHT_DELIVERY'):
+					dayContainer.style.display = 'none';
+					expressContainer.style.display = 'none';
+					break;
+			}
+
+			deliveryItemsContainer.appendChild(formContainer);
+
+		},
+
+		editDeliveryItemsOld: function(deliveryNode)
+		{
+			var deliveryItemsContainer = BX.create('DIV', {props: {className: 'col-sm-7 bx-soa-pp-item-container'}, style: {display: 'none'}}),
 				deliveryItemNode, k;
 
 			for (k = 0; k < this.deliveryPagination.currentPage.length; k++)
@@ -5638,12 +5725,207 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			deliveryNode.appendChild(deliveryItemsContainer);
 		},
 
+		changeDeliveryDays: function()
+		{
+			const today = new Date();
+
+			var nightDiv = this.deliveryTypeProp.getParentNode().querySelector('input[value="' + BX.message('NIGHT_DELIVERY') + '"]');
+			var expressDiv = this.deliveryTypeProp.getParentNode().querySelector('input[value="' + BX.message('EXDELIVERY') + '"]');
+
+			const city = $('#guru_address_button_id').attr('courier_city');
+			if ((city != 'Москва') && (city != 'Санкт-Петербург'))
+			{
+				this.deliveryType = BX.message('KDELIVERY');
+				this.deliveryTypeProp.setValue(BX.message('KDELIVERY'));
+
+				nightDiv.disabled = true;
+				expressDiv.disabled = true;
+
+				$("#guru_period_start").val(9);
+				$('#guru_period_start').prop('disabled', true);
+
+				$("#guru_period_finish").val(18);
+				$('#guru_period_finish').prop('disabled', true);
+			}
+			else
+			{
+				nightDiv.disabled = false;
+				expressDiv.disabled = false;
+				
+				$('#guru_period_start').prop('disabled', false);
+				$('#guru_period_finish').prop('disabled', false);
+			}
+
+			switch (this.deliveryType)
+			{
+				case BX.message('KDELIVERY'):
+					document.getElementById('day-courier').style.display = 'block';
+					document.getElementById('express-courier').style.display = 'none';
+					document.getElementById('night-courier').style.display = 'none';
+					break;
+				case BX.message('EXDELIVERY'):
+					document.getElementById('day-courier').style.display = 'none';
+					document.getElementById('express-courier').style.display = 'block';
+					document.getElementById('night-courier').style.display = 'none';
+					break;
+				case BX.message('NIGHT_DELIVERY'):
+					document.getElementById('day-courier').style.display = 'none';
+					document.getElementById('express-courier').style.display = 'none';
+					document.getElementById('night-courier').style.display = 'block';
+					break;
+			}
+
+			this.deliveryDays = 2;
+			switch (this.deliveryType)
+			{
+				case BX.message('KDELIVERY'):
+					this.deliveryDays = 2;
+					break;
+				case BX.message('EXDELIVERY'):
+					this.deliveryDays = (today.getHours() < 13) ? 1 : 2;
+					break;
+				case BX.message('NIGHT_DELIVERY'):
+					this.deliveryDays = (today.getHours() < 18) ? 1 : 2;
+					if(parseInt($("#guru_night_period_start").val()) < 3)
+						++this.deliveryDays;
+					break;
+			}
+			
+			var normalizedDate;
+			if($('#datepicker').val() != null && $('#datepicker').val() != '')
+			{
+				var delDate = $('#datepicker').val();
+				normalizedDate = new Date(delDate.substring(6), delDate.substring(3, 5) - 1, delDate.substring(0, 2));
+			}
+			
+			var minimumDate = new Date(today);
+			minimumDate.setDate(minimumDate.getDate() + 2);
+
+			if($('#datepicker').val() == null || $('#datepicker').val() == '' || minimumDate > normalizedDate)
+				$('#datepicker').val(minimumDate.getDate() + '.' + (minimumDate.getMonth() + 1) + '.' + minimumDate.getFullYear());
+			
+			$j("#datepicker").datepicker('destroy');
+			$j("#datepicker").datepicker({
+				timepicker: false,
+				dateFormat: 'dd.mm.yy',
+				minDate : '+' + this.deliveryDays,
+				onSelect: function() {
+					$(this).change();
+				}
+			});
+		},
+
+		editDeliveryItems: function(deliveryNode)
+		{
+			if (!this.result.DELIVERY || this.result.DELIVERY.length <= 0)
+				return;
+
+			var deliveryItemsContainer = BX.create('DIV', {props: {className: 'col-sm-12 bx-soa-delivery'}}),
+			group, property, groupIterator = this.propertyCollection.getGroupIterator(), propsIterator;
+
+			if (!deliveryItemsContainer)
+				deliveryItemsContainer = this.propsBlockNode.querySelector('.col-sm-12.bx-soa-delivery');
+
+			while (group = groupIterator())
+			{
+				propsIterator =  group.getIterator();
+				while (property = propsIterator())
+				{
+					if (property.getSettings()['CODE'].startsWith("GURU2_"))
+					{
+						this.getPropertyRowNode(property, deliveryItemsContainer, false);
+					}
+
+					if(property.getSettings()['CODE'] == 'GURU2_TYPE')
+					{
+						this.deliveryTypeProp = property;
+						this.addFromToTime(deliveryItemsContainer, this.deliveryType);				
+
+						property.addEvent("change", BX.delegate(function(e){
+							this.deliveryType = e.target.attributes['value'].value;
+							this.changeDeliveryDays();
+						}, this));
+
+						var nightDiv = property.getParentNode().querySelector('input[value="' + BX.message('NIGHT_DELIVERY') + '"]');
+						var expressDiv = property.getParentNode().querySelector('input[value="' + BX.message('EXDELIVERY') + '"]');
+			
+						const city = $('#guru_address_button_id').attr('courier_city');
+						if ((city != 'Москва') && (city != 'Санкт-Петербург'))
+						{
+							this.deliveryTypeProp.setValue(BX.message('KDELIVERY'));
+							//this.deliveryTypeProp.dispatchEvent(new Event('change'));
+						}
+					}
+					
+					if(property.getSettings()['CODE'] == 'GURU2_DATE')
+					{
+						property.getParentNode().querySelector('input[type=text]').id = "datepicker";
+
+						property.addEvent("change", BX.proxy(this.confirmAddress, this));
+						
+						$j("#datepicker").datepicker({
+							timepicker: false,
+							dateFormat: 'dd.mm.yy',
+							minDate : '+2',
+							onSelect: function() {
+								$(this).change();
+							}
+						});
+					}
+
+					if(property.getSettings()['CODE'] == 'GURU2_APART')
+					{
+						this.deliveryRoomProp = property;
+						property.getParentNode().querySelector('input[type=text]').id = 'courier-room';
+						property.addEvent("change", BX.delegate(function(){
+							var val = this.deliveryAddrProp.getValue();
+							if(val != '')
+							{
+								var address_array = val.split(':');
+								address_array[6] = $("#courier-room").val();
+								this.deliveryAddrProp.setValue(address_array.join(':'));
+							}
+						}, this));
+					}
+
+					if(property.getSettings()['CODE'] == 'GURU2_ENTRACE')
+						property.getParentNode().querySelector('input[type=text]').id = 'courier-entrance';
+
+					if(property.getSettings()['CODE'] == 'GURU2_INTERCOM')
+						property.getParentNode().querySelector('input[type=text]').id = 'courier-intercom';
+
+					if(property.getSettings()['CODE'] == 'GURU2_FLOOR')
+						property.getParentNode().querySelector('input[type=text]').id = 'courier-level';
+
+					if(property.getSettings()['CODE'] == 'GURU2_RECIEVER')
+						property.getParentNode().querySelector('input[type=text]').id = 'courier-reciever';
+
+					if(property.getSettings()['CODE'] == 'GURU2_ADDR')
+					{
+						var addressInput = property.getParentNode().querySelector('input[type=text]');
+						addressInput.id = "address2";
+						property.addEvent("input", BX.proxy(this.changeAddress, this));
+						property.addEvent("focus", BX.proxy(this.changeAddress, this));
+						property.addEvent("confirm", BX.proxy(this.confirmAddress, this));
+
+						property.getParentNode().appendChild(BX.create('DIV', {props: {className: 'response_addr'}}));
+
+						deliveryItemsContainer.appendChild(BX.create('DIV', {props: {id: 'no-room-warning-courier'}}));
+					}
+				}
+			}
+			
+			deliveryNode.appendChild(deliveryItemsContainer);
+			
+			this.editDeliveryItemsOld(deliveryNode);
+		},
+
 		editDeliveryInfo: function(deliveryNode)
 		{
 			if (!this.result.DELIVERY)
 				return;
 
-			var deliveryInfoContainer = BX.create('DIV', {props: {className: 'col-sm-5 bx-soa-pp-desc-container'}}),
+			var deliveryInfoContainer = BX.create('DIV', {props: {className: 'col-sm-5 bx-soa-pp-desc-container'}, style: {display: 'none'}}),
 				currentDelivery, logotype, name, logoNode,
 				subTitle, label, title, price, period,
 				clear, infoList, extraServices, extraServicesNode;
@@ -5942,7 +6224,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				name = this.params.SHOW_DELIVERY_PARENT_NAMES != 'N' ? selectedDelivery.NAME : selectedDelivery.OWN_NAME,
 				errorNode = this.deliveryHiddenBlockNode.querySelector('div.alert.alert-danger'),
 				warningNode = this.deliveryHiddenBlockNode.querySelector('div.alert.alert-warning.alert-show'),
-				extraService, logotype, imgSrc, arNodes, i;
+				extraService, logotype, imgSrc, arNodes, i, validDeliveryErrors;
 
 			if (errorNode && errorNode.innerHTML)
 				node.appendChild(errorNode.cloneNode(true));
@@ -5997,6 +6279,14 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				node.appendChild(BX.create('STRONG', {text: BX.message('SOA_DELIVERY_SELECT_ERROR')}));
 
 			node.appendChild(BX.create('DIV', {style: {clear: 'both'}}));
+
+			if (this.deliveryBlockNode.getAttribute('data-visited') === 'true')
+			{
+				validDeliveryErrors = this.isValidDeliveryBlock();
+				if (validDeliveryErrors.length)
+					this.showError(this.deliveryBlockNode, validDeliveryErrors);
+			}
+
 			BX.bind(node.querySelector('.alert.alert-danger'), 'click', BX.proxy(this.showByClick, this));
 			BX.bind(node.querySelector('.alert.alert-warning'), 'click', BX.proxy(this.showByClick, this));
 		},
@@ -6950,15 +7240,24 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				while (property = propsIterator())
 				{
 					if (
-						this.deliveryLocationInfo.loc == property.getId()
+						property.getSettings()['CODE'].startsWith("GURU")
+						|| this.deliveryLocationInfo.loc == property.getId()
 						|| this.deliveryLocationInfo.zip == property.getId()
 						|| this.deliveryLocationInfo.city == property.getId()
 					)
 						continue;
-
+					
 					this.getPropertyRowNode(property, propsItemsContainer, false);
+
+					if(property.getSettings()['CODE'] == 'ADDRESS')
+					{
+						this.deliveryAddrProp = property;
+						property.getParentNode().querySelector('input[type=text]').id = 'guru_courier_address';
+						propsItemsContainer.querySelector('[data-property-id-row="' + property.getId() + '"]').style.display = 'none';
+					}
 				}
 			}
+
 
 			propsNode.appendChild(propsItemsContainer);
 		},
@@ -7554,8 +7853,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				return true;
 
 			var regionErrors = this.isValidRegionBlock(),
-				propsErrors = this.isValidPropertiesBlock(),
 				deliveryErrors = this.isValidDeliveryBlock(),
+				propsErrors = this.isValidPropertiesBlock(),
 				navigated = false, tooltips, i;
 
 			if (regionErrors.length)
@@ -7564,9 +7863,14 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				this.animateScrollTo(this.regionBlockNode, 800, 50);
 			}
 
-			if (propsErrors.length && !navigated)
+			if(deliveryErrors.length && !navigated)
 			{
 				navigated = true;
+				this.animateScrollTo(this.deliveryBlockNode, 800, 50);
+			}
+
+			if (propsErrors.length && !navigated)
+			{
 				if (this.activeSectionId == this.propsBlockNode.id)
 				{
 					tooltips = this.propsBlockNode.querySelectorAll('div.tooltip');
@@ -7583,15 +7887,16 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					this.animateScrollTo(this.propsBlockNode, 800, 50);
 			}
 
-			if(deliveryErrors.length && !navigated)
-			{
-				this.animateScrollTo(this.deliveryBlockNode, 800, 50);
-			}
-
 			if (regionErrors.length)
 			{
 				this.showError(this.regionBlockNode, regionErrors);
 				BX.addClass(this.regionBlockNode, 'bx-step-error');
+			}
+			
+			if (deliveryErrors.length)
+			{
+				this.showError(this.deliveryBlockNode, deliveryErrors);
+				BX.addClass(this.deliveryBlockNode, 'bx-step-error');
 			}
 
 			if (propsErrors.length)
@@ -7600,12 +7905,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					this.showError(this.propsBlockNode, propsErrors);
 
 				BX.addClass(this.propsBlockNode, 'bx-step-error');
-			}
-
-			if (deliveryErrors.length)
-			{
-				this.showError(this.deliveryBlockNode, deliveryErrors);
-				BX.addClass(this.deliveryBlockNode, 'bx-step-error');
 			}
 
 			return !(regionErrors.length + propsErrors.length + deliveryErrors.length);
@@ -7634,8 +7933,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		isValidDeliveryBlock: function()
 		{
+			if (!this.options.propertyValidation)
+				return [];
+
 			var deliveryErrors = [];
-			
+
 			if(!$('#address2').val())
 				deliveryErrors.push([BX.message('SOA_FIELD') + ' "' + BX.message('SOA_PICKUP_ADDRESS') + '" ' + BX.message('SOA_REQUIRED')]);
 			else if($('#address2').val() != $('#guru_address_button_id').attr('check_address'))
@@ -7670,8 +7972,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				if (propContainer)
 				{
 					arProperty = this.validation.properties[id];
-					data = this.getValidationData(arProperty, propContainer);
-					propsErrors = propsErrors.concat(this.isValidProperty(data, true));
+					if(arProperty['CODE'].startsWith("GURU2_") == false)
+					{
+						data = this.getValidationData(arProperty, propContainer);
+						propsErrors = propsErrors.concat(this.isValidProperty(data, true));
+					}
 				}
 			}
 
@@ -8301,6 +8606,20 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				this.totalInfoBlockNode.appendChild(this.createTotalUnit(BX.message('SOA_PAYSYSTEM_PRICE'), '~' + total.PAY_SYSTEM_PRICE_FORMATTED));
 			}
+
+			this.totalInfoBlockNode.appendChild(BX.create('DIV', {
+				//props: {className: 'bx-soa-cart-total-button-container' + (!showOrderButton ? ' visible-xs' : '')},
+				//children: [
+					//BX.create('A', {
+						props: {
+							href: 'javascript:void(0)',
+							className: 'bx-soa-cart-total-line'
+						},
+						html: 'Нажимая «Оформить заказ», вы соглашаетесь с условиями <a href="/lp/docs/terms/">Публичной оферты</a> и <a href="/lp/docs/agreement/">Пользовательским соглашением</a>',
+				//	})
+
+				//]
+			}));
 
 			if (!this.result.SHOW_AUTH)
 			{
