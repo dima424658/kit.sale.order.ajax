@@ -75,10 +75,16 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			this.deliveryType = BX.message('KDELIVERY');
 			this.deliveryTypeProp = null;
 			this.deliveryAddrProp = null;
-			this.deliveryRoomProp = null;
 			this.deliveryDateProp = null;
-			this.deliveryDateValue = '';
+			
 			this.deliveryDays = 2;
+
+			this.courier_address = '';
+			this.courier_city = '';
+			this.check_address = '';
+			this.guru_location = '';
+			this.guru_zip = '';
+			this.guru_room = '';
 						
 		},
 
@@ -146,8 +152,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			this.options.pickUpMap = parameters.pickUpMap;
 			this.options.propertyMap = parameters.propertyMap;
-
-			this.gurumap = parameters.gurumap;
 
 			this.options.totalPriceChanged = false;
 
@@ -272,9 +276,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 								break;
 						}
 						BX.cleanNode(this.savedFilesBlockNode);
-
-						//this.deliveryAddrProp.setValue('');
-
 						this.endLoader();
 					}, this),
 					onfailure: BX.delegate(function(){
@@ -2487,7 +2488,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				this.deliveryBlockNode.style.display = 'none';
 			}
 
-			this.orderSaveBlockNode.style.display = 'none';
+			this.orderSaveBlockNode.style.display = this.result.SHOW_AUTH ? 'none' : '';
 			this.mobileTotalBlockNode.style.display = this.result.SHOW_AUTH ? 'none' : '';
 
 			this.checkPickUpShow();
@@ -5422,16 +5423,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		},
 
 		guruUpdateAddress: function (callback = null) {
-			if ($('#address2').val() != $('#guru_address_button_id').attr('check_address') || !$('#address2').val())
+			if ($('#address2').val() != this.check_address || !$('#address2').val())
 				return false;
-
-			var courier_address = $('#guru_address_button_id').attr('courier_address'),
-			user_address = $('#guru_address_button_id').attr('user_address'),
-			courier_city = $('#guru_address_button_id').attr('courier_city'),
-			check_address = $('#guru_address_button_id').attr('check_address'),
-			guru_location = $('#guru_address_button_id').attr('location'),
-			guru_zip = $('#guru_address_button_id').attr('zip'),
-			guru_room = $('#guru_address_button_id').attr('room');
 
 			this.deliveryAddrProp.setValue('');
 
@@ -5439,32 +5432,80 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				url: '/local/php_interface/include/ajax_session.php',
 				type: "POST",
 				data: {
-					guru_delivery_address: courier_address,
-					guru_delivery_city: courier_city,
-					guru_user_delivery_address: user_address,
-					guru_check_delivery_address: check_address,
-					guru_delivery_location: guru_location,
-					guru_delivery_zip: guru_zip,
-					guru_delivery_room: guru_room
+					guru_delivery_address: this.courier_address,
+					guru_delivery_city: this.courier_city,
+					guru_check_delivery_address: this.check_address,
+					guru_delivery_location: this.guru_location,
+					guru_delivery_zip: this.guru_zip,
+					guru_delivery_room: this.guru_room
 				},
 				success: function (result) {
 					$.post('/local/php_interface/include/guru_methods.php', {
 						method: 'get_pvz_codes_2',
 						init: 'get_pvz'
-					}).done(function (data) {
-
+					}).done(BX.delegate(function (data) {
 						BX.Sale.OrderAjaxComponent.sendRequest();
 
-						if ($('#guru_address_button_id').attr('room'))
-							document.getElementById('courier-room').value = $('#guru_address_button_id').attr('room');
+						if (this.guru_room)
+							document.getElementById('courier-room').value = this.guru_room;
 						else
 							document.getElementById('courier-room').value = '';
 
 						if(callback != null)
 							callback();
-					});
+					}, this));
 				}
 			});
+		},
+
+		addrLiEvent: function(event)
+		{
+			var region_v = 	event.target.attributes['param_reg'].value;
+			var raion_v = 	event.target.attributes['param_rai'].value;
+			var city_v = 	event.target.attributes['param_cit'].value;
+			var zip_v =		event.target.attributes['param_zip'].value;
+			var korpus = 	event.target.attributes['param_kor'].value;
+			var flat = 		event.target.attributes['param_fla'].value;
+			var street = 	event.target.attributes['param_stre'].value;
+			var house = 	event.target.attributes['param_hou'].value;
+			var kladr = 	event.target.attributes['param_kladr'].value;
+			var type_city = event.target.attributes['param_type'].value;
+			var adres = 	event.target.attributes['param_adres'].value;
+
+			$.ajax({
+				url: '/local/php_interface/include/get_location.php',
+				type: "GET",
+				async: true,
+				data: {
+					city: city_v,
+					rayon: raion_v,
+					region: region_v
+				},
+				success: BX.delegate(function (result) {
+					this.guru_location = result;
+				}, this)
+			});
+
+			$('#address2').val(adres);
+		
+			if (house) {
+				this.courier_address = 'address:' + zip_v + ':' + adres;
+				this.check_address = adres;
+				this.courier_city = city_v;
+				this.guru_zip = zip_v;
+				this.guru_room = flat ? flat : '';
+			} else {
+				this.courier_address = '';
+				this.check_address = '';
+				this.courier_city = '';
+				this.guru_zip = '';
+				this.guru_room = '';
+			}
+			
+			$('.response_addr').html('');
+
+			this.confirmAddress();
+
 		},
 
 		changeAddress: function(event)
@@ -5475,9 +5516,10 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				str: $('#address2').val(),
 				key: key,
 				id: id
-			}).done(function(data) {
+			}).done(BX.delegate(function (data) {
 				$('.response_addr').html(data);
-			});
+				document.querySelectorAll('.addr_li').forEach(el => el.addEventListener('click', BX.proxy(this.addrLiEvent, this)));
+			}, this));
 		},
 
 		confirmAddress: function()
@@ -5491,7 +5533,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				return;
 			}
 
-			else if($('#guru_address_button_id').attr('check_address') != $('#address2').val())
+			else if(this.check_address != $('#address2').val())
 			{
 				this.showValidationResult(document.querySelectorAll("#address2"), [BX.message('ENTER_ADDRESS')]);
 				this.animateScrollTo(this.deliveryBlockNode, 800, 50);
@@ -5502,8 +5544,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				this.showValidationResult(document.querySelectorAll("#address2"), []);
 			}
 
-			if ($('#guru_address_button_id').attr('room'))
-				document.getElementById('courier-room').value = $('#guru_address_button_id').attr('room');
+			if (this.guru_room)
+				document.getElementById('courier-room').value = this.guru_room;
 
 			if (!$('#datepicker').val() || !$("#courier-room").val()) {
 				console.log($('#datepicker').val() + ' ' + $("#courier-room").val());
@@ -5511,13 +5553,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				return false;
 			}
 
-			this.deliveryDateValue = $('#datepicker').val();
-			$('#datepicker').attr('type', 'text');
 			this.guruUpdateAddress(BX.delegate(function () {
 				this.changeDeliveryDays();
 			}, this));
 			
-			var address_array = $('#guru_address_button_id').attr('courier_address').split(':');
+			var address_array = this.courier_address.split(':');
 			address_array[3] = this.deliveryType;
 			address_array[4] = $('#datepicker').val();
 
@@ -5538,8 +5578,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			address_array[7] = $("#courier-entrance").val();
 			address_array[8] = $("#courier-intercom").val();
 			address_array[9] = $("#courier-level").val();
-			address_array[10] = $('#guru_address_button_id').attr('location');
-			address_array[11] = $('#guru_address_button_id').attr('courier_city');
+			address_array[10] = this.guru_location;
+			address_array[11] = this.courier_city;
 			
 			$.ajax({
 				url: '/local/php_interface/include/save_fio.php',
@@ -5778,8 +5818,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			nightDiv.disabled = true;
 			expressDiv.disabled = true;
 			
-			const city = $('#guru_address_button_id').attr('courier_city');
-			if ((city != 'Москва') && (city != 'Санкт-Петербург'))
+			if ((this.courier_city != 'Москва') && (this.courier_city != 'Санкт-Петербург'))
 			{
 				$("#guru_period_start").val(9);
 				$('#guru_period_start').prop('disabled', true);
@@ -5885,8 +5924,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 							var nightDiv = property.getParentNode().querySelector('input[value="' + BX.message('NIGHT_DELIVERY') + '"]');
 							var expressDiv = property.getParentNode().querySelector('input[value="' + BX.message('EXDELIVERY') + '"]');
 				
-							const city = $('#guru_address_button_id').attr('courier_city');
-							if ((city != 'Москва') && (city != 'Санкт-Петербург'))
+							if ((this.courier_city != 'Москва') && (this.courier_city != 'Санкт-Петербург'))
 							{
 								this.deliveryTypeProp.setValue(BX.message('KDELIVERY'));
 								//this.deliveryTypeProp.dispatchEvent(new Event('change'));
@@ -5918,7 +5956,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 						if(property.getSettings()['CODE'] == 'GURU2_APART')
 						{
-							this.deliveryRoomProp = property;
 							property.getParentNode().querySelector('input[type=text]').id = 'courier-room';
 							property.addEvent("change", BX.delegate(function(){
 								var val = this.deliveryAddrProp.getValue();
@@ -5949,7 +5986,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 							addressInput.id = "address2";
 							property.addEvent("input", BX.proxy(this.changeAddress, this));
 							property.addEvent("focus", BX.proxy(this.changeAddress, this));
-							property.addEvent("confirm", BX.proxy(this.confirmAddress, this));
 
 							property.getParentNode().appendChild(BX.create('DIV', {props: {className: 'response_addr'}}));
 
@@ -7290,18 +7326,16 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						|| this.deliveryLocationInfo.city == property.getId()
 					)
 						continue;
-					
+
 					this.getPropertyRowNode(property, propsItemsContainer, false);
 
 					if(property.getSettings()['CODE'] == 'ADDRESS')
 					{
 						this.deliveryAddrProp = property;
-						property.getParentNode().querySelector('input[type=text]').id = 'guru_courier_address';
 						propsItemsContainer.querySelector('[data-property-id-row="' + property.getId() + '"]').style.display = 'none'; // dev
 					}
 				}
 			}
-
 
 			propsNode.appendChild(propsItemsContainer);
 		},
@@ -7995,7 +8029,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			if(!$('#address2').val())
 				deliveryErrors.push([BX.message('SOA_FIELD') + ' "' + BX.message('SOA_PICKUP_ADDRESS') + '" ' + BX.message('SOA_REQUIRED')]);
-			else if($('#address2').val() != $('#guru_address_button_id').attr('check_address'))
+			else if($('#address2').val() != this.check_address)
 				deliveryErrors.push( [BX.message('ENTER_ADDRESS')]);
 
 			if(!$("#courier-room").val())

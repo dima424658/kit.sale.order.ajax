@@ -1,13 +1,10 @@
-
-<?
-CJSCore::Init(['jquery3', 'phone_number']);
-
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
 CModule::IncludeModule("kitgr.gurudelivery");
+CJSCore::Init(['jquery3', 'phone_number']);
 
 /**
  * @var array $arParams
@@ -383,17 +380,6 @@ else
 						</h2>
 						<div class="col-xs-12 col-sm-3 text-right"><a href="" class="bx-soa-editstep"><?=$arParams['MESS_EDIT']?></a></div>
 					</div>
-					<div id="guru_address" class="guru_delivery_data">
-                            <?
-                            $APPLICATION->IncludeComponent(
-                                "kit:dostavka.guru.address",
-                                ".default",
-                                Array(
-                                ),
-                                false
-                            );
-                            ?>
-                        </div>
 					<div class="bx-soa-section-content container-fluid"></div>
 				</div>
 

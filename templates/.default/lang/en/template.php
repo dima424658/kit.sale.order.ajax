@@ -1,4 +1,15 @@
 <?
+$MESS["ENTER_ADDRESS"] = "Enter the address up to the house";
+$MESS["KDELIVERY"] = "ДОСТАВКА";
+$MESS["EXDELIVERY"] = "Экспресс доставка";
+$MESS["OBDELIVERY"] = "ДОСТАВКА";
+$MESS["NIGHT_DELIVERY"] = "Ночная доставка";
+$MESS["APNUM"] = "Apartment number";
+
+$MESS["SELECT_DELIVERY_DATE"] = "Delivery date";
+$MESS["DELFROM"] = "Delivery from";
+$MESS["DELTO"] = "to";
+
 $MESS["ADDITIONAL_PROPS_DEFAULT"] = "Additional properties";
 $MESS["ADD_DEFAULT"] = "Add";
 $MESS["AUTH_BLOCK_NAME_DEFAULT"] = "Log in";
@@ -53,7 +64,7 @@ $MESS["SOA_ERROR_ORDER_LOST"] = "Order no. #ORDER_ID# cannot be found.";
 $MESS["SOA_ERROR_ORDER_LOST1"] = "Please contact the store administration or try again.";
 $MESS["SOA_FIELD"] = "Field";
 $MESS["SOA_INVALID_EMAIL"] = "E-mail is incorrect";
-$MESS["SOA_INVALID_PHONE"] = "Phone number is incorrect";
+$MESS["SOA_INVALID_EMAIL"] = "Phone number is incorrect";
 $MESS["SOA_INVALID_PATTERN"] = "does not match the pattern";
 $MESS["SOA_LESS"] = "at least";
 $MESS["SOA_LOCATION_NOT_FOUND"] = "Location was not found";

@@ -1,25 +1,13 @@
 <?
-$MESS["SHOW_YOUR_PLACE"] = "Укажите своё местоположение";
 $MESS["ENTER_ADDRESS"] = "Введите адрес с точностью до дома";
-$MESS["SELECT_PVZ"] = "Выберите пункт выдачи:";
-$MESS["FILL_RECEIVER"] = "Отдельно заполнить данные получателя";
-$MESS["RECEIVER"] = "Имя получателя (заполните, если получать заказ будет другой человек)";
-$MESS["FILL_REQ"] = "Заполните все обязательные поля!";
-$MESS["SELECT_TYPE"] = "Выберите тип доставки:";
 $MESS["KDELIVERY"] = "ДОСТАВКА";
 $MESS["EXDELIVERY"] = "Экспресс доставка";
 $MESS["OBDELIVERY"] = "ДОСТАВКА";
 $MESS["NIGHT_DELIVERY"] = "Ночная доставка";
 $MESS["APNUM"] = "Номер квартиры";
-$MESS["ENTRANCE"] = "Подъезд";
-$MESS["HOME_PHONE"] = "Домофон";
-$MESS["STAGE"] = "Этаж";
 $MESS["SELECT_DELIVERY_DATE"] = "Дата доставки";
 $MESS["DELFROM"] = "Доставка с";
 $MESS["DELTO"] = "до";
-$MESS["EVENING_DELIVERY"] = "Дата доставки считается с вечера. После 00:00 - это следующий день!";
-$MESS["ADDRESS_SAVED"] = "Ваш адрес сохранён!";
-$MESS["BUTTON_SAVE"] = "Подтвердить";
 
 $MESS["SOA_YES"] = "да";
 $MESS["SOA_NO"] = "нет";
