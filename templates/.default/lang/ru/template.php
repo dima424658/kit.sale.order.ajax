@@ -42,6 +42,7 @@ $MESS["SOA_ORDER_PROPS"] = "Свойства заказа";
 $MESS["SOA_FIELD"] = "Поле";
 $MESS["SOA_REQUIRED"] = "обязательно для заполнения";
 $MESS["SOA_INVALID_EMAIL"] = "Введен неверный e-mail";
+$MESS["SOA_INVALID_PHONE"] = "Введен неверный номер телефона";
 $MESS["SOA_MIN_LENGTH"] = "Минимальная длина поля";
 $MESS["SOA_MAX_LENGTH"] = "Максимальная длина поля";
 $MESS["SOA_NOT_NUMERIC"] = "должно быть числовым";

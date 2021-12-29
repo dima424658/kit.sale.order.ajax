@@ -1,7 +1,5 @@
 BX.namespace('BX.Sale.OrderAjaxComponent');
 
-var $j = jQuery.noConflict();
-
 (function() {
 	'use strict';
 
@@ -74,10 +72,12 @@ var $j = jQuery.noConflict();
 			this.orderSaveAllowed = false;
 			this.socServiceHiddenNode = false;
 
-			this.deliveryType = "ДОСТАВКА";
+			this.deliveryType = BX.message('KDELIVERY');
 			this.deliveryTypeProp = null;
 			this.deliveryAddrProp = null;
 			this.deliveryRoomProp = null;
+			this.deliveryDateProp = null;
+			this.deliveryDateValue = '';
 			this.deliveryDays = 2;
 						
 		},
@@ -1768,6 +1768,8 @@ var $j = jQuery.noConflict();
 		{
 			if (this.isValidForm())
 			{
+				this.confirmAddress();
+
 				this.allowOrderSave();
 
 				if (this.params.USER_CONSENT === 'Y' && BX.UserConsent)
@@ -5401,6 +5403,8 @@ var $j = jQuery.noConflict();
 				deliveryContent.appendChild(deliveryNode);
 				this.editDeliveryInfo(deliveryNode);
 
+				this.changeDeliveryDays();
+
 				if (this.params.SHOW_COUPONS_DELIVERY == 'Y')
 					this.editCoupons(deliveryContent);
 
@@ -5408,7 +5412,7 @@ var $j = jQuery.noConflict();
 
 				if (this.deliveryBlockNode.getAttribute('data-visited') === 'true')
 				{
-					validationErrors = this.isValidDeliveryBlock(true);
+					validationErrors = this.isValidDeliveryBlock();
 					if (validationErrors.length)
 						BX.addClass(this.deliveryBlockNode, 'bx-step-error');
 					else
@@ -5501,15 +5505,17 @@ var $j = jQuery.noConflict();
 			if ($('#guru_address_button_id').attr('room'))
 				document.getElementById('courier-room').value = $('#guru_address_button_id').attr('room');
 
-			this.guruUpdateAddress(BX.delegate(function () {
-				this.changeDeliveryDays();
-			}, this));
-
 			if (!$('#datepicker').val() || !$("#courier-room").val()) {
 				console.log($('#datepicker').val() + ' ' + $("#courier-room").val());
 				this.deliveryAddrProp.setValue('');
 				return false;
 			}
+
+			this.deliveryDateValue = $('#datepicker').val();
+			$('#datepicker').attr('type', 'text');
+			this.guruUpdateAddress(BX.delegate(function () {
+				this.changeDeliveryDays();
+			}, this));
 			
 			var address_array = $('#guru_address_button_id').attr('courier_address').split(':');
 			address_array[3] = this.deliveryType;
@@ -5546,6 +5552,35 @@ var $j = jQuery.noConflict();
 			this.deliveryAddrProp.setValue(address_array.join(':'));
 		},
 
+		updateDatepicker: function(datepickerDiv = null)
+		{
+			const today = new Date();
+			const days = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+			const month = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+			
+			if(datepickerDiv == null)
+				datepickerDiv = document.getElementById('datepicker');
+
+			if(datepickerDiv == null)
+				return;
+
+			datepickerDiv.querySelectorAll('.datepicker-option').forEach(el => el.remove());
+			console.log('delivery days:' + this.deliveryDays);
+			var optionDate = new Date();
+			for (let offset = 0; offset < 7; ++offset) {
+				var optionDate = new Date();
+				optionDate.setDate(optionDate.getDate() + offset + this.deliveryDays);
+
+				datepickerDiv.appendChild(BX.create('OPTION', {
+					props: { className: 'datepicker-option', value: optionDate.toLocaleDateString()},
+					text: optionDate.getDate() + ' ' + month[optionDate.getMonth()] + ', ' + days[optionDate.getDay()]
+				}));
+			}
+
+			if(this.deliveryDateProp.getValue() != '')
+				datepickerDiv.value = this.deliveryDateProp.getValue();
+		},
+
 		addFromToTime: function (deliveryItemsContainer, showType = BX.message('KDELIVERY')) {
 			// -------------------------- День --------------------------
 			var dayContainer = BX.create('DIV', { props: { id: 'day-courier' }, style: { display: 'flex' } }),
@@ -5554,9 +5589,10 @@ var $j = jQuery.noConflict();
 					props: { name: 'start', id: 'guru_period_start' },
 					events: {
 						change: BX.delegate(function (e) {
-							var start = parseInt($("#guru_period_start").val());
-							if(parseInt($("#guru_period_finish").val()) - start < 3)
-								$("#guru_period_finish").val(start + 3);
+							if(parseInt($("#guru_period_start").val()) == 9)
+								$("#guru_period_finish").val(18);
+							if(parseInt($("#guru_period_start").val()) == 15)
+								$("#guru_period_finish").val(22);
 							this.changeDeliveryDays();
 						}, this)
 					}
@@ -5566,19 +5602,21 @@ var $j = jQuery.noConflict();
 					props: { name: 'finish', id: 'guru_period_finish' },
 					events: {
 						change: BX.delegate(function (e) {
-							var finish = parseInt($("#guru_period_finish").val())
-							if(finish - parseInt($("#guru_period_start").val()) < 3)
-								$("#guru_period_start").val(finish - 3);
+							if(parseInt($("#guru_period_finish").val()) == 18)
+								$("#guru_period_start").val(9);
+							if(parseInt($("#guru_period_finish").val()) == 22)
+								$("#guru_period_start").val(15);
 							this.changeDeliveryDays();
 						}, this)
 					}
 				});
 	
-			for (var i = 9; i <= 19; ++i)
-					dayStart.appendChild(BX.create('OPTION', { props: { value: i }, text: i + '.00' }));
+				
+			dayStart.appendChild(BX.create('OPTION', { props: { value: 9 }, text: '9.00' }));
+			dayFinish.appendChild(BX.create('OPTION', { props: { value: 18 }, text: '18.00' }));
 
-			for (var i = 12; i <= 22; ++i)
-					dayFinish.appendChild(BX.create('OPTION', { props: { value: i }, text: i + '.00' }));
+			dayStart.appendChild(BX.create('OPTION', { props: { value: 15 }, text: '15.00' }));
+			dayFinish.appendChild(BX.create('OPTION', { props: { value: 22 }, text: '22.00' }));
 			
 			dayContainer.appendChild(BX.create('LABEL', { text: BX.message('DELFROM'), style: { margin: '0 5px' } }));
 			dayContainer.appendChild(dayStart);
@@ -5727,20 +5765,22 @@ var $j = jQuery.noConflict();
 
 		changeDeliveryDays: function()
 		{
+			console.log('changeDeliveryDays');
+
 			const today = new Date();
 
 			var nightDiv = this.deliveryTypeProp.getParentNode().querySelector('input[value="' + BX.message('NIGHT_DELIVERY') + '"]');
 			var expressDiv = this.deliveryTypeProp.getParentNode().querySelector('input[value="' + BX.message('EXDELIVERY') + '"]');
+			
+			this.deliveryType = BX.message('KDELIVERY');
+			this.deliveryTypeProp.setValue(BX.message('KDELIVERY'));
 
+			nightDiv.disabled = true;
+			expressDiv.disabled = true;
+			
 			const city = $('#guru_address_button_id').attr('courier_city');
 			if ((city != 'Москва') && (city != 'Санкт-Петербург'))
 			{
-				this.deliveryType = BX.message('KDELIVERY');
-				this.deliveryTypeProp.setValue(BX.message('KDELIVERY'));
-
-				nightDiv.disabled = true;
-				expressDiv.disabled = true;
-
 				$("#guru_period_start").val(9);
 				$('#guru_period_start').prop('disabled', true);
 
@@ -5748,10 +5788,7 @@ var $j = jQuery.noConflict();
 				$('#guru_period_finish').prop('disabled', true);
 			}
 			else
-			{
-				nightDiv.disabled = false;
-				expressDiv.disabled = false;
-				
+			{				
 				$('#guru_period_start').prop('disabled', false);
 				$('#guru_period_finish').prop('disabled', false);
 			}
@@ -5790,29 +5827,29 @@ var $j = jQuery.noConflict();
 						++this.deliveryDays;
 					break;
 			}
+
+			// winter fix
+			this.deliveryDays = 2;
 			
-			var normalizedDate;
-			if($('#datepicker').val() != null && $('#datepicker').val() != '')
+			var normalizedDate = new Date(Number.NaN); // set invalid value
+			if($('#datepicker').val() != null)
 			{
-				var delDate = $('#datepicker').val();
-				normalizedDate = new Date(delDate.substring(6), delDate.substring(3, 5) - 1, delDate.substring(0, 2));
+				var dateParts = $('#datepicker').val().split(".");
+
+				var delDate = Date.parse(+dateParts[2], dateParts[1] - 1, +dateParts[0]);
+				normalizedDate = new Date(delDate);
 			}
 			
 			var minimumDate = new Date(today);
-			minimumDate.setDate(minimumDate.getDate() + 2);
+			minimumDate.setDate(minimumDate.getDate() + this.deliveryDays);
 
-			if($('#datepicker').val() == null || $('#datepicker').val() == '' || minimumDate > normalizedDate)
-				$('#datepicker').val(minimumDate.getDate() + '.' + (minimumDate.getMonth() + 1) + '.' + minimumDate.getFullYear());
-			
-			$j("#datepicker").datepicker('destroy');
-			$j("#datepicker").datepicker({
-				timepicker: false,
-				dateFormat: 'dd.mm.yy',
-				minDate : '+' + this.deliveryDays,
-				onSelect: function() {
-					$(this).change();
-				}
-			});
+			if(isNaN(normalizedDate.getTime()) || minimumDate > normalizedDate)
+			{
+				this.deliveryDateProp.setValue(minimumDate.toLocaleDateString());
+				this.updateDatepicker();
+			}
+			//$('#datepicker').attr('min', normalizedDate.toISOString().substring(0,10));
+			//optionDate.toLocaleDateString().replaceAll('.', '-')
 		},
 
 		editDeliveryItems: function(deliveryNode)
@@ -5834,83 +5871,90 @@ var $j = jQuery.noConflict();
 					if (property.getSettings()['CODE'].startsWith("GURU2_"))
 					{
 						this.getPropertyRowNode(property, deliveryItemsContainer, false);
-					}
 
-					if(property.getSettings()['CODE'] == 'GURU2_TYPE')
-					{
-						this.deliveryTypeProp = property;
-						this.addFromToTime(deliveryItemsContainer, this.deliveryType);				
-
-						property.addEvent("change", BX.delegate(function(e){
-							this.deliveryType = e.target.attributes['value'].value;
-							this.changeDeliveryDays();
-						}, this));
-
-						var nightDiv = property.getParentNode().querySelector('input[value="' + BX.message('NIGHT_DELIVERY') + '"]');
-						var expressDiv = property.getParentNode().querySelector('input[value="' + BX.message('EXDELIVERY') + '"]');
-			
-						const city = $('#guru_address_button_id').attr('courier_city');
-						if ((city != 'Москва') && (city != 'Санкт-Петербург'))
+						if(property.getSettings()['CODE'] == 'GURU2_TYPE')
 						{
-							this.deliveryTypeProp.setValue(BX.message('KDELIVERY'));
-							//this.deliveryTypeProp.dispatchEvent(new Event('change'));
-						}
-					}
-					
-					if(property.getSettings()['CODE'] == 'GURU2_DATE')
-					{
-						property.getParentNode().querySelector('input[type=text]').id = "datepicker";
+							this.deliveryTypeProp = property;
+							this.addFromToTime(deliveryItemsContainer, this.deliveryType);				
 
-						property.addEvent("change", BX.proxy(this.confirmAddress, this));
-						
-						$j("#datepicker").datepicker({
-							timepicker: false,
-							dateFormat: 'dd.mm.yy',
-							minDate : '+2',
-							onSelect: function() {
-								$(this).change();
-							}
-						});
-					}
+							property.addEvent("change", BX.delegate(function(e){
+								this.deliveryType = e.target.attributes['value'].value;
+								this.changeDeliveryDays();
+							}, this));
 
-					if(property.getSettings()['CODE'] == 'GURU2_APART')
-					{
-						this.deliveryRoomProp = property;
-						property.getParentNode().querySelector('input[type=text]').id = 'courier-room';
-						property.addEvent("change", BX.delegate(function(){
-							var val = this.deliveryAddrProp.getValue();
-							if(val != '')
+							var nightDiv = property.getParentNode().querySelector('input[value="' + BX.message('NIGHT_DELIVERY') + '"]');
+							var expressDiv = property.getParentNode().querySelector('input[value="' + BX.message('EXDELIVERY') + '"]');
+				
+							const city = $('#guru_address_button_id').attr('courier_city');
+							if ((city != 'Москва') && (city != 'Санкт-Петербург'))
 							{
-								var address_array = val.split(':');
-								address_array[6] = $("#courier-room").val();
-								this.deliveryAddrProp.setValue(address_array.join(':'));
+								this.deliveryTypeProp.setValue(BX.message('KDELIVERY'));
+								//this.deliveryTypeProp.dispatchEvent(new Event('change'));
 							}
-						}, this));
-					}
+						}
+						
+						if(property.getSettings()['CODE'] == 'GURU2_DATE')
+						{
+							this.deliveryDateProp = property;
 
-					if(property.getSettings()['CODE'] == 'GURU2_ENTRACE')
-						property.getParentNode().querySelector('input[type=text]').id = 'courier-entrance';
+							var propDiv = property.getParentNode().querySelector('input[type=text]');
+							propDiv.style.display = 'none';
 
-					if(property.getSettings()['CODE'] == 'GURU2_INTERCOM')
-						property.getParentNode().querySelector('input[type=text]').id = 'courier-intercom';
+							var datepickerDiv = BX.create('SELECT', {
+								props: { id: 'datepicker', className: 'form-control',
+								},
+								events: {
+									change: BX.delegate(function (e) {
+										this.deliveryDateProp.setValue($('#datepicker').val());
+										this.confirmAddress();
+									}, this)
+								}
+							});
 
-					if(property.getSettings()['CODE'] == 'GURU2_FLOOR')
-						property.getParentNode().querySelector('input[type=text]').id = 'courier-level';
+							this.updateDatepicker(datepickerDiv);
+							
+							property.getParentNode().appendChild(datepickerDiv);							
+						}
 
-					if(property.getSettings()['CODE'] == 'GURU2_RECIEVER')
-						property.getParentNode().querySelector('input[type=text]').id = 'courier-reciever';
+						if(property.getSettings()['CODE'] == 'GURU2_APART')
+						{
+							this.deliveryRoomProp = property;
+							property.getParentNode().querySelector('input[type=text]').id = 'courier-room';
+							property.addEvent("change", BX.delegate(function(){
+								var val = this.deliveryAddrProp.getValue();
+								if(val != '')
+								{
+									var address_array = val.split(':');
+									address_array[6] = $("#courier-room").val();
+									this.deliveryAddrProp.setValue(address_array.join(':'));
+								}
+							}, this));
+						}
 
-					if(property.getSettings()['CODE'] == 'GURU2_ADDR')
-					{
-						var addressInput = property.getParentNode().querySelector('input[type=text]');
-						addressInput.id = "address2";
-						property.addEvent("input", BX.proxy(this.changeAddress, this));
-						property.addEvent("focus", BX.proxy(this.changeAddress, this));
-						property.addEvent("confirm", BX.proxy(this.confirmAddress, this));
+						if(property.getSettings()['CODE'] == 'GURU2_ENTRACE')
+							property.getParentNode().querySelector('input[type=text]').id = 'courier-entrance';
 
-						property.getParentNode().appendChild(BX.create('DIV', {props: {className: 'response_addr'}}));
+						if(property.getSettings()['CODE'] == 'GURU2_INTERCOM')
+							property.getParentNode().querySelector('input[type=text]').id = 'courier-intercom';
 
-						deliveryItemsContainer.appendChild(BX.create('DIV', {props: {id: 'no-room-warning-courier'}}));
+						if(property.getSettings()['CODE'] == 'GURU2_FLOOR')
+							property.getParentNode().querySelector('input[type=text]').id = 'courier-level';
+
+						if(property.getSettings()['CODE'] == 'GURU2_RECIEVER')
+							property.getParentNode().querySelector('input[type=text]').id = 'courier-reciever';
+
+						if(property.getSettings()['CODE'] == 'GURU2_ADDR')
+						{
+							var addressInput = property.getParentNode().querySelector('input[type=text]');
+							addressInput.id = "address2";
+							property.addEvent("input", BX.proxy(this.changeAddress, this));
+							property.addEvent("focus", BX.proxy(this.changeAddress, this));
+							property.addEvent("confirm", BX.proxy(this.confirmAddress, this));
+
+							property.getParentNode().appendChild(BX.create('DIV', {props: {className: 'response_addr'}}));
+
+							deliveryItemsContainer.appendChild(BX.create('DIV', {props: {id: 'no-room-warning-courier'}}));
+						}
 					}
 				}
 			}
@@ -7253,7 +7297,7 @@ var $j = jQuery.noConflict();
 					{
 						this.deliveryAddrProp = property;
 						property.getParentNode().querySelector('input[type=text]').id = 'guru_courier_address';
-						propsItemsContainer.querySelector('[data-property-id-row="' + property.getId() + '"]').style.display = 'none';
+						propsItemsContainer.querySelector('[data-property-id-row="' + property.getId() + '"]').style.display = 'none'; // dev
 					}
 				}
 			}
@@ -7681,8 +7725,19 @@ var $j = jQuery.noConflict();
 				if (settings.IS_PAYER == 'Y')
 					textNode.setAttribute('autocomplete', 'name');
 				if (settings.IS_PHONE == 'Y')
+				{
 					textNode.setAttribute('autocomplete', 'tel');
-
+					
+					new BX.PhoneNumber.Input({
+						node: textNode,
+						flagNode: BX('flag'), //
+						flagSize: 16, // Размер флага [16, 24, 32]
+						defaultCountry: 'ru', // Страна по-умолчанию
+						onChange: function(e) {
+							console.log('changed');
+						}
+					});
+				}
 				if (settings.PATTERN && settings.PATTERN.length)
 				{
 					textNode.removeAttribute('pattern');
@@ -8270,6 +8325,12 @@ var $j = jQuery.noConflict();
 							errors.push(BX.message('SOA_INVALID_EMAIL'));
 						}
 					}
+				}
+
+				if(arProperty.IS_PHONE === 'Y')
+				{
+					if(BX.PhoneNumberParser.getInstance().parse(value).value.valid === false)
+						errors.push(BX.message('SOA_INVALID_PHONE'));
 				}
 
 				if (value.length > 0 && arProperty.PATTERN && arProperty.PATTERN.length)

@@ -1,12 +1,6 @@
+
 <?
-CJSCore::RegisterExt('jquery-ui', [
-	'js' => '/bitrix/js/custom/jquery-ui/jquery-ui.min.js',
-	'css' => '/bitrix/js/custom/jquery-ui/jquery-ui.min.css',
-	'rel' => []
-]);
-?>
-<?
-CJSCore::Init(['jquery', 'jquery-ui']);
+CJSCore::Init(['jquery3', 'phone_number']);
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
