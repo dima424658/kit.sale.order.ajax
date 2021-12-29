@@ -8363,7 +8363,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				if(arProperty.IS_PHONE === 'Y')
 				{
-					if(BX.PhoneNumberParser.getInstance().parse(value).value.valid === false)
+					if(BX.PhoneNumberParser.getInstance().parse(value).value != null && BX.PhoneNumberParser.getInstance().parse(value).value.valid === false)
 						errors.push(BX.message('SOA_INVALID_PHONE'));
 				}
 
